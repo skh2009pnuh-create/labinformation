@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>검체검사 보험 수가 조회</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --primary: #1a5276;
+    --accent: #2980b9;
+    --accent2: #1abc9c;
+    --border: #d5e0ec;
+    --text: #1c2833;
+    --muted: #6c7a89;
+    --tag1: #eaf4fb;
+    --tag1b: #2980b9;
+    --tag2: #eafaf1;
+    --tag2b: #1e8449;
+    --shadow: 0 2px 8px rgba(26,82,118,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 20px 24px 16px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(26,82,118,0.25);
+  }
+  header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 12px; }
+  header h1 span { font-size: 0.75rem; font-weight: 400; opacity: 0.7; margin-left: 8px; }
+
+  .search-row { display: flex; gap: 8px; }
+  #searchInput {
+    flex: 1; padding: 10px 14px; border-radius: 8px; border: none;
+    font-size: 0.95rem; background: rgba(255,255,255,0.15); color: #fff;
+    outline: none; transition: background 0.2s;
+  }
+  #searchInput::placeholder { color: rgba(255,255,255,0.55); }
+  #searchInput:focus { background: rgba(255,255,255,0.25); }
+  #clearBtn {
+    padding: 10px 14px; border-radius: 8px; border: none;
+    background: rgba(255,255,255,0.15); color: #fff; cursor: pointer;
+    font-size: 0.85rem; transition: background 0.2s;
+  }
+  #clearBtn:hover { background: rgba(255,255,255,0.25); }
+
+  .filter-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 5px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);
+    background: transparent; color: rgba(255,255,255,0.8); cursor: pointer;
+    font-size: 0.75rem; transition: all 0.15s; white-space: nowrap;
+  }
+  .filter-btn.active, .filter-btn:hover { background: rgba(255,255,255,0.2); color: #fff; border-color: rgba(255,255,255,0.6); }
+  .filter-btn.active { background: var(--accent2); border-color: var(--accent2); }
+
+  /* STATS */
+  .stats-bar {
+    display: flex; gap: 16px; padding: 10px 20px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    font-size: 0.8rem; color: var(--muted); align-items: center;
+  }
+  .stats-bar strong { color: var(--primary); }
+
+  /* MAIN */
+  main { max-width: 960px; margin: 0 auto; padding: 16px 16px 60px; }
+
+  /* GROUP CARD */
+  .group-card {
+    background: var(--surface); border-radius: 12px; margin-bottom: 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden;
+  }
+  .group-header {
+    display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+    cursor: pointer; user-select: none; transition: background 0.15s;
+  }
+  .group-header:hover { background: #f7fafc; }
+  .group-code {
+    font-size: 0.78rem; font-weight: 700; color: var(--primary);
+    background: var(--tag1); border: 1px solid var(--border);
+    padding: 3px 8px; border-radius: 5px; white-space: nowrap; font-family: monospace;
+  }
+  .group-name { flex: 1; font-size: 0.95rem; font-weight: 600; }
+  .group-cat {
+    font-size: 0.72rem; color: var(--accent); background: var(--tag1);
+    padding: 2px 8px; border-radius: 12px; white-space: nowrap;
+  }
+  .group-count {
+    font-size: 0.72rem; color: var(--muted); white-space: nowrap;
+  }
+  .chevron { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; }
+  .group-card.open .chevron { transform: rotate(180deg); }
+
+  /* ITEMS TABLE */
+  .items-table { display: none; border-top: 1px solid var(--border); overflow-x: auto; }
+  .group-card.open .items-table { display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead tr { background: #f0f4f8; }
+  th { padding: 8px 10px; text-align: left; font-weight: 600; color: var(--muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7fafc; }
+
+  .code-cell { font-family: monospace; font-size: 0.78rem; color: var(--primary); font-weight: 600; }
+  .price-cell { text-align: right; font-variant-numeric: tabular-nums; }
+  .price-val { font-weight: 600; color: var(--text); }
+  .price-unit { font-size: 0.7rem; color: var(--muted); }
+  .rv-cell { text-align: right; color: var(--accent); font-weight: 500; }
+  .section-badge {
+    display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;
+  }
+  .s1 { background: var(--tag1); color: var(--tag1b); }
+  .s2 { background: var(--tag2); color: var(--tag2b); }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty .icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty p { font-size: 0.95rem; }
+
+  /* LOADING */
+  #loading { text-align: center; padding: 80px 20px; }
+  .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
+
+  @media (max-width: 600px) {
+    .group-cat { display: none; }
+    th:nth-child(3), td:nth-child(3),
+    th:nth-child(5), td:nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>검체검사 보험 수가 조회 <span>장구분 02 · 절구분 01/02</span></h1>
+  <div class="search-row">
+    <input id="searchInput" type="search" placeholder="검사명 또는 수가코드 검색..." autocomplete="off">
+    <button id="clearBtn">지우기</button>
+  </div>
+  <div class="filter-row" id="filterRow">
+    <button class="filter-btn active" data-cat="">전체</button>
+  </div>
+</header>
+
+<div class="stats-bar" id="statsBar">
+  <span>불러오는 중...</span>
+</div>
+
+<main id="main">
+  <div id="loading">
+    <div class="spinner"></div>
+    <p style="color:#6c7a89">데이터 불러오는 중...</p>
+  </div>
+</main>
+
+<script src="LAB_DATA.js"></script>
+<script>
+let currentCat = '';
+let currentQuery = '';
+let currentData = [];
+
+function fmt(n) {
+  if (n == null) return '-';
+  return n.toLocaleString('ko-KR');
+}
+
+function highlight(text, q) {
+  if (!q) return text;
+  const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(esc, 'gi'), m => `<mark>${m}</mark>`);
+}
+
+function buildCategories() {
+  const cats = [...new Set(LAB_DATA.map(d => d.cat).filter(Boolean))].sort();
+  const row = document.getElementById('filterRow');
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.dataset.cat = cat;
+    btn.textContent = cat;
+    btn.onclick = () => selectCat(cat);
+    row.appendChild(btn);
+  });
+}
+
+function selectCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  render();
+}
+
+function getFiltered() {
+  const q = currentQuery.trim().toLowerCase();
+  return LAB_DATA.filter(g => {
+    if (currentCat && g.cat !== currentCat) return false;
+    if (!q) return true;
+    if (g.n.toLowerCase().includes(q)) return true;
+    if (g.i.some(it => it.c.toLowerCase().includes(q) || it.n.toLowerCase().includes(q) || (it.e && it.e.toLowerCase().includes(q)))) return true;
+    return false;
+  });
+}
+
+function render() {
+  const filtered = getFiltered();
+  const q = currentQuery.trim().toLowerCase();
+  const main = document.getElementById('main');
+  const stats = document.getElementById('statsBar');
+
+  const totalItems = filtered.reduce((s, g) => s + g.i.length, 0);
+  stats.innerHTML = `검사그룹 <strong>${filtered.length.toLocaleString()}</strong>개 &nbsp;·&nbsp; 수가코드 <strong>${totalItems.toLocaleString()}</strong>개${q ? ` &nbsp;·&nbsp; "<strong>${q}</strong>" 검색 결과` : ''}`;
+
+  if (filtered.length === 0) {
+    main.innerHTML = `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`;
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  filtered.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'group-card';
+
+    const groupCode = g.i[0]?.c?.slice(0, 5) || '';
+    const isSingle = g.i.length === 1;
+
+    card.innerHTML = `
+      <div class="group-header" onclick="toggleCard(this)">
+        <span class="group-code">${highlight(groupCode, q)}</span>
+        <span class="group-name">${highlight(g.n, q)}</span>
+        ${g.cat ? `<span class="group-cat">${g.cat}</span>` : ''}
+        ${!isSingle ? `<span class="group-count">${g.i.length}개</span>` : ''}
+        <span class="chevron">▼</span>
+      </div>
+      <div class="items-table">
+        <table>
+          <thead>
+            <tr>
+              <th>수가코드</th>
+              <th>검사명</th>
+              <th>분류번호</th>
+              <th>의원단가</th>
+              <th>병원급단가</th>
+              <th>상대가치</th>
+              <th>절구분</th>
+              <th>적용일자</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${g.i.map(it => `
+              <tr>
+                <td class="code-cell">${highlight(it.c, q)}</td>
+                <td>${highlight(it.n, q)}</td>
+                <td style="color:#6c7a89;font-size:0.78rem">${it.cl || '-'}</td>
+                <td class="price-cell">${it.p1 != null ? `<span class="price-val">${fmt(it.p1)}</span><span class="price-unit">원</span>` : '-'}</td>
+                <td class="price-cell">${it.p2 != null ? `<span class="price-val">${fmt(it.p2)}</span><span class="price-unit">원</span>` : '-'}</td>
+                <td class="rv-cell">${it.rv != null ? it.rv.toFixed(2) : '-'}</td>
+                <td><span class="section-badge ${it.s === '절1' ? 's1' : 's2'}">${it.s}</span></td>
+                <td style="font-size:0.75rem;color:#6c7a89">${it.d}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+
+    // Auto-open if single item or search match
+    if (isSingle || q) {
+      card.classList.add('open');
+    }
+
+    fragment.appendChild(card);
+  });
+
+  main.innerHTML = '';
+  main.appendChild(fragment);
+}
+
+function toggleCard(header) {
+  header.closest('.group-card').classList.toggle('open');
+}
+
+// Search
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    currentQuery = e.target.value;
+    render();
+  }, 200);
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('searchInput').value = '';
+  currentQuery = '';
+  render();
+});
+
+// Init
+document.getElementById('loading').style.display = 'none';
+buildCategories();
+render();
+</script>
+</body>
+</html>
