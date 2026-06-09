@@ -19,6 +19,7 @@
     --tag2: #eafaf1;
     --tag2b: #1e8449;
     --shadow: 0 2px 8px rgba(26,82,118,0.10);
+    --fav: #f39c12;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -48,6 +49,13 @@
     font-size: 0.85rem; transition: background 0.2s;
   }
   #clearBtn:hover { background: rgba(255,255,255,0.25); }
+  #favToggleBtn {
+    padding: 10px 14px; border-radius: 8px; border: none;
+    background: rgba(255,255,255,0.15); color: #fff; cursor: pointer;
+    font-size: 0.85rem; transition: all 0.2s; white-space: nowrap;
+  }
+  #favToggleBtn:hover { background: rgba(255,255,255,0.25); }
+  #favToggleBtn.active { background: var(--fav); color: #fff; }
 
   .filter-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
   .filter-btn {
@@ -73,7 +81,10 @@
   .group-card {
     background: var(--surface); border-radius: 12px; margin-bottom: 12px;
     box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden;
+    transition: border-color 0.2s;
   }
+  .group-card.favorited { border-color: var(--fav); }
+
   .group-header {
     display: flex; align-items: center; gap: 10px; padding: 14px 16px;
     cursor: pointer; user-select: none; transition: background 0.15s;
@@ -89,11 +100,19 @@
     font-size: 0.72rem; color: var(--accent); background: var(--tag1);
     padding: 2px 8px; border-radius: 12px; white-space: nowrap;
   }
-  .group-count {
-    font-size: 0.72rem; color: var(--muted); white-space: nowrap;
-  }
+  .group-count { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
   .chevron { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; }
   .group-card.open .chevron { transform: rotate(180deg); }
+
+  /* FAV BUTTON */
+  .fav-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 1.1rem; padding: 2px 4px; line-height: 1;
+    opacity: 0.35; transition: opacity 0.15s, transform 0.15s;
+    flex-shrink: 0;
+  }
+  .fav-btn:hover { opacity: 0.7; transform: scale(1.2); }
+  .fav-btn.on { opacity: 1; }
 
   /* ITEMS TABLE */
   .items-table { display: none; border-top: 1px solid var(--border); overflow-x: auto; }
@@ -116,15 +135,19 @@
   .s1 { background: var(--tag1); color: var(--tag1b); }
   .s2 { background: var(--tag2); color: var(--tag2b); }
 
-  /* EMPTY */
+  /* FAV EMPTY */
   .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
   .empty .icon { font-size: 3rem; margin-bottom: 12px; }
   .empty p { font-size: 0.95rem; }
 
-  /* LOADING */
-  #loading { text-align: center; padding: 80px 20px; }
-  .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #2c3e50; color: #fff; padding: 10px 20px; border-radius: 20px;
+    font-size: 0.85rem; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 
@@ -141,6 +164,7 @@
   <h1>검체검사 보험 수가 조회 <span>장구분 02 · 절구분 01/02</span></h1>
   <div class="search-row">
     <input id="searchInput" type="search" placeholder="검사명 또는 수가코드 검색..." autocomplete="off">
+    <button id="favToggleBtn">⭐ 즐겨찾기</button>
     <button id="clearBtn">지우기</button>
   </div>
   <div class="filter-row" id="filterRow">
@@ -152,18 +176,57 @@
   <span>불러오는 중...</span>
 </div>
 
-<main id="main">
-  <div id="loading">
-    <div class="spinner"></div>
-    <p style="color:#6c7a89">데이터 불러오는 중...</p>
-  </div>
-</main>
+<main id="main"></main>
+
+<div id="toast"></div>
 
 <script src="LAB_DATA.js"></script>
 <script>
 let currentCat = '';
 let currentQuery = '';
-let currentData = [];
+let showFavOnly = false;
+let favorites = new Set(JSON.parse(localStorage.getItem('lab_favs') || '[]'));
+
+function saveFavs() {
+  localStorage.setItem('lab_favs', JSON.stringify([...favorites]));
+}
+
+function toggleFav(groupCode, event) {
+  event.stopPropagation();
+  if (favorites.has(groupCode)) {
+    favorites.delete(groupCode);
+    showToast('즐겨찾기에서 제거했습니다');
+  } else {
+    favorites.add(groupCode);
+    showToast('⭐ 즐겨찾기에 추가했습니다');
+  }
+  saveFavs();
+  // Update just this card's fav button & border (no full re-render)
+  const card = document.querySelector(`.group-card[data-group="${groupCode}"]`);
+  if (card) {
+    const btn = card.querySelector('.fav-btn');
+    const isFav = favorites.has(groupCode);
+    btn.textContent = isFav ? '⭐' : '☆';
+    btn.classList.toggle('on', isFav);
+    card.classList.toggle('favorited', isFav);
+  }
+  if (showFavOnly) render();
+  updateFavBtn();
+}
+
+function updateFavBtn() {
+  const btn = document.getElementById('favToggleBtn');
+  btn.classList.toggle('active', showFavOnly);
+  btn.textContent = showFavOnly ? '⭐ 즐겨찾기 보는중' : `⭐ 즐겨찾기 ${favorites.size > 0 ? '('+favorites.size+')' : ''}`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
 
 function fmt(n) {
   if (n == null) return '-';
@@ -200,6 +263,8 @@ function selectCat(cat) {
 function getFiltered() {
   const q = currentQuery.trim().toLowerCase();
   return LAB_DATA.filter(g => {
+    const groupCode = g.i[0]?.c?.slice(0, 5) || '';
+    if (showFavOnly && !favorites.has(groupCode)) return false;
     if (currentCat && g.cat !== currentCat) return false;
     if (!q) return true;
     if (g.n.toLowerCase().includes(q)) return true;
@@ -215,10 +280,15 @@ function render() {
   const stats = document.getElementById('statsBar');
 
   const totalItems = filtered.reduce((s, g) => s + g.i.length, 0);
-  stats.innerHTML = `검사그룹 <strong>${filtered.length.toLocaleString()}</strong>개 &nbsp;·&nbsp; 수가코드 <strong>${totalItems.toLocaleString()}</strong>개${q ? ` &nbsp;·&nbsp; "<strong>${q}</strong>" 검색 결과` : ''}`;
+  let statText = `검사그룹 <strong>${filtered.length.toLocaleString()}</strong>개 &nbsp;·&nbsp; 수가코드 <strong>${totalItems.toLocaleString()}</strong>개`;
+  if (showFavOnly) statText += ` &nbsp;·&nbsp; ⭐ 즐겨찾기만 표시`;
+  if (q) statText += ` &nbsp;·&nbsp; "<strong>${q}</strong>" 검색 결과`;
+  stats.innerHTML = statText;
 
   if (filtered.length === 0) {
-    main.innerHTML = `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`;
+    main.innerHTML = showFavOnly
+      ? `<div class="empty"><div class="icon">⭐</div><p>즐겨찾기한 항목이 없습니다<br><small style="font-size:0.82rem;margin-top:6px;display:block">각 검사 항목의 ☆ 버튼을 눌러 추가하세요</small></p></div>`
+      : `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`;
     return;
   }
 
@@ -226,13 +296,16 @@ function render() {
 
   filtered.forEach(g => {
     const card = document.createElement('div');
-    card.className = 'group-card';
-
     const groupCode = g.i[0]?.c?.slice(0, 5) || '';
+    const isFav = favorites.has(groupCode);
     const isSingle = g.i.length === 1;
+
+    card.className = 'group-card' + (isFav ? ' favorited' : '');
+    card.dataset.group = groupCode;
 
     card.innerHTML = `
       <div class="group-header" onclick="toggleCard(this)">
+        <button class="fav-btn ${isFav ? 'on' : ''}" onclick="toggleFav('${groupCode}', event)" title="즐겨찾기">${isFav ? '⭐' : '☆'}</button>
         <span class="group-code">${highlight(groupCode, q)}</span>
         <span class="group-name">${highlight(g.n, q)}</span>
         ${g.cat ? `<span class="group-cat">${g.cat}</span>` : ''}
@@ -269,11 +342,7 @@ function render() {
         </table>
       </div>`;
 
-    // Auto-open if single item or search match
-    if (isSingle || q) {
-      card.classList.add('open');
-    }
-
+    if (isSingle || q) card.classList.add('open');
     fragment.appendChild(card);
   });
 
@@ -301,9 +370,15 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   render();
 });
 
+document.getElementById('favToggleBtn').addEventListener('click', () => {
+  showFavOnly = !showFavOnly;
+  updateFavBtn();
+  render();
+});
+
 // Init
-document.getElementById('loading').style.display = 'none';
 buildCategories();
+updateFavBtn();
 render();
 </script>
 </body>
