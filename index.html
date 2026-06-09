@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -144,6 +143,15 @@
 
   mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 
+  /* 계층형 세분류 */
+  .side-big { font-weight: 700; color: var(--primary); font-size: 0.82rem; background: #f7fafc; }
+  .side-big.active { background: var(--tag1); border-left-color: var(--accent); }
+  .sub-wrap { display: none; }
+  .sub-wrap.open { display: block; }
+  .side-sub { padding-left: 22px; font-size: 0.77rem; color: var(--muted); }
+  .side-sub:hover { color: var(--text); }
+  .side-sub.active { color: var(--accent); font-weight: 600; background: var(--tag1); border-left-color: var(--accent); }
+
   @media (max-width: 700px) {
     .sidebar { display: none; }
     header h1 span { display: none; }
@@ -177,6 +185,14 @@
         <button class="side-btn b-btn active" data-bracket="">전체</button>
       </div>
     </div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">절구분</span>
+      <div id="sectionList">
+        <button class="side-btn sec-btn active" data-sec="">전체</button>
+        <button class="side-btn sec-btn" data-sec="절1">절1</button>
+        <button class="side-btn sec-btn" data-sec="절2">절2</button>
+      </div>
+    </div>
   </aside>
 
   <!-- 오른쪽 콘텐츠 -->
@@ -193,6 +209,7 @@
 <script>
 let currentCat = '';
 let currentBracket = '';
+let currentSection = '';
 let currentQuery = '';
 let showFavOnly = false;
 let currentPage = 0;
@@ -250,24 +267,61 @@ function highlight(text, q) {
   return text.replace(new RegExp(esc, 'gi'), m => `<mark>${m}</mark>`);
 }
 
+const EXCLUDE_BRACKETS = new Set(['1장기당', 'bDNA유전자신호증폭법', '훼리틴', 'IGH/IGK gene 동시', 'IGH gene', 'UreaseTest', '색조, 비중, 세포수, 세포감별계산, 산도', 'STR Markers', 'DNA Microarray법', 'bDNA유전자신호증폭측정법', '양측정, 색조검사, 현미경관찰, 산측정, 유산, 잠혈반응, 펩신등', 'D4Z4 Repeat', 'IgG', 'NPN포함', '알파지중해빈혈', '정성그룹2']);
+
 function buildSidebar() {
-  // 세분류
+  // 세분류 - 대분류/소분류 계층
   const cats = [...new Set(LAB_DATA.map(d => d.cat).filter(Boolean))].sort();
   const catList = document.getElementById('catList');
+
+  // 대분류 추출
+  const bigMap = {}; // 대분류 -> [소분류들]
   cats.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'side-btn';
-    btn.dataset.cat = cat;
-    btn.textContent = cat;
-    btn.onclick = () => selectCat(cat);
-    catList.appendChild(btn);
+    const big = cat.split('-')[0];
+    if (!bigMap[big]) bigMap[big] = [];
+    bigMap[big].push(cat);
+  });
+
+  Object.keys(bigMap).sort().forEach(big => {
+    const subs = bigMap[big];
+    // 대분류 버튼
+    const bigBtn = document.createElement('button');
+    bigBtn.className = 'side-btn side-big';
+    bigBtn.dataset.cat = '__big__' + big;
+    bigBtn.textContent = '▸ ' + big;
+    bigBtn.onclick = () => selectBigCat(big, bigBtn);
+    catList.appendChild(bigBtn);
+
+    // 소분류 버튼들 (처음엔 숨김)
+    const subWrap = document.createElement('div');
+    subWrap.className = 'sub-wrap';
+    subWrap.dataset.big = big;
+    subs.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'side-btn side-sub';
+      btn.dataset.cat = cat;
+      btn.textContent = cat.includes('-') ? cat.split('-').slice(1).join('-') : cat;
+      btn.title = cat;
+      btn.onclick = () => selectCat(cat);
+      subWrap.appendChild(btn);
+    });
+    catList.appendChild(subWrap);
   });
 
   // [ ] 검사방법
   const re = /\[([^\]]+)\]/;
-  const brackets = [...new Set(LAB_DATA.map(g => { const m = re.exec(g.n); return m ? m[1] : null; }).filter(v => v && !v.includes('Gene')))].sort();
+  const brackets = [...new Set(LAB_DATA.map(g => { const m = re.exec(g.n); return m ? m[1] : null; })
+    .filter(v => v && !v.includes('Gene') && !EXCLUDE_BRACKETS.has(v)))].sort();
   const brList = document.getElementById('bracketList');
-  brackets.forEach(br => {
+  // 핵산증폭 특수 항목 먼저 추가
+  const nukBtn = document.createElement('button');
+  nukBtn.className = 'side-btn b-btn';
+  nukBtn.dataset.bracket = '핵산증폭';
+  nukBtn.textContent = '핵산증폭 (전체)';
+  nukBtn.onclick = () => selectBracket('핵산증폭');
+  brList.appendChild(nukBtn);
+
+  brackets.filter(br => !br.startsWith('핵산증폭')).forEach(br => {
     const btn = document.createElement('button');
     btn.className = 'side-btn b-btn';
     btn.dataset.bracket = br;
@@ -275,13 +329,54 @@ function buildSidebar() {
     btn.onclick = () => selectBracket(br);
     brList.appendChild(btn);
   });
+  // 핵산증폭 세부 항목도 추가
+  brackets.filter(br => br.startsWith('핵산증폭') && br !== '핵산증폭').forEach(br => {
+    const btn = document.createElement('button');
+    btn.className = 'side-btn b-btn';
+    btn.dataset.bracket = br;
+    btn.textContent = '  ' + br;
+    btn.onclick = () => selectBracket(br);
+    brList.appendChild(btn);
+  });
+}
+
+function selectSection(sec) {
+  currentSection = sec;
+  currentPage = 0;
+  document.querySelectorAll('.sec-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
+  render();
+}
+
+function selectBigCat(big, bigBtn) {
+  // 대분류 클릭: 소분류 토글 + 대분류 자체로 필터
+  const subWrap = document.querySelector('.sub-wrap[data-big="' + big + '"]');
+  const isOpen = subWrap.classList.contains('open');
+
+  // 모든 sub-wrap 닫기
+  document.querySelectorAll('.sub-wrap').forEach(w => w.classList.remove('open'));
+  document.querySelectorAll('.side-big').forEach(b => { b.classList.remove('active'); b.textContent = '▸ ' + b.dataset.cat.replace('__big__',''); });
+
+  if (!isOpen) {
+    subWrap.classList.add('open');
+    bigBtn.classList.add('active');
+    bigBtn.textContent = '▾ ' + big;
+  }
+
+  // 대분류 필터 적용
+  currentCat = isOpen ? '' : '__big__' + big;
+  currentBracket = '';
+  currentPage = 0;
+  document.querySelectorAll('#catList .side-sub').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
+  currentSection = ''; document.querySelectorAll('.sec-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === ''));
+  render();
 }
 
 function selectCat(cat) {
   currentCat = cat;
   currentBracket = '';
   currentPage = 0;
-  document.querySelectorAll('#catList .side-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  document.querySelectorAll('#catList .side-sub').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
   document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
   render();
 }
@@ -299,11 +394,23 @@ function getFiltered() {
   return LAB_DATA.filter(g => {
     const groupCode = g.i[0]?.c?.slice(0, 5) || '';
     if (showFavOnly && !favorites.has(groupCode)) return false;
-    if (currentCat && g.cat !== currentCat) return false;
-    if (currentBracket) {
-      const m = brRe.exec(g.n);
-      if (!m || m[1] !== currentBracket) return false;
+    if (currentCat) {
+      if (currentCat.startsWith('__big__')) {
+        const big = currentCat.replace('__big__', '');
+        if (!g.cat || !g.cat.startsWith(big)) return false;
+      } else {
+        if (g.cat !== currentCat) return false;
+      }
     }
+    if (currentBracket) {
+      if (currentBracket === '핵산증폭') {
+        if (!g.n.includes('핵산증폭')) return false;
+      } else {
+        const m = brRe.exec(g.n);
+        if (!m || m[1] !== currentBracket) return false;
+      }
+    }
+    if (currentSection && !g.i.some(it => it.s === currentSection)) return false;
     if (!q) return true;
     if (g.n.toLowerCase().includes(q)) return true;
     if (groupCode.toLowerCase().includes(q)) return true;
@@ -403,7 +510,10 @@ document.getElementById('searchInput').addEventListener('input', e => {
 document.getElementById('clearBtn').addEventListener('click', () => {
   document.getElementById('searchInput').value = '';
   currentQuery = ''; currentCat = ''; currentBracket = ''; currentPage = 0; showFavOnly = false;
-  document.querySelectorAll('#catList .side-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
+  document.querySelectorAll('#catList .side-sub').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.side-big').forEach(b => { b.classList.remove('active'); b.textContent = '▸ ' + b.dataset.cat.replace('__big__',''); });
+  document.querySelectorAll('.sub-wrap').forEach(w => w.classList.remove('open'));
+  document.querySelector('#catList .side-btn[data-cat=""]').classList.add('active');
   document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
   updateFavBtn(); render();
 });
@@ -412,10 +522,19 @@ document.getElementById('favToggleBtn').addEventListener('click', () => {
   showFavOnly = !showFavOnly; currentPage = 0; updateFavBtn(); render();
 });
 
-document.querySelector('#catList .side-btn[data-cat=""]').addEventListener('click', () => selectCat(''));
+document.querySelector('#catList .side-btn[data-cat=""]').addEventListener('click', () => {
+  currentCat = ''; currentBracket = ''; currentPage = 0;
+  document.querySelectorAll('#catList .side-sub').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.side-big').forEach(b => { b.classList.remove('active'); b.textContent = '▸ ' + b.dataset.cat.replace('__big__',''); });
+  document.querySelectorAll('.sub-wrap').forEach(w => w.classList.remove('open'));
+  document.querySelector('#catList .side-btn[data-cat=""]').classList.add('active');
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
+  render();
+});
 document.querySelector('.b-btn[data-bracket=""]').addEventListener('click', () => selectBracket(''));
 
 buildSidebar();
+document.querySelectorAll('.sec-btn').forEach(b => b.addEventListener('click', () => selectSection(b.dataset.sec)));
 updateFavBtn();
 render();
 </script>
