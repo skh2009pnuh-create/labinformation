@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -20,141 +21,132 @@
     --tag2b: #1e8449;
     --shadow: 0 2px 8px rgba(26,82,118,0.10);
     --fav: #f39c12;
+    --sidebar-w: 220px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-  /* HEADER */
+  /* TOP HEADER */
   header {
-    background: var(--primary);
-    color: #fff;
-    padding: 20px 24px 16px;
-    position: sticky; top: 0; z-index: 100;
+    background: var(--primary); color: #fff;
+    padding: 14px 20px; position: sticky; top: 0; z-index: 200;
     box-shadow: 0 2px 12px rgba(26,82,118,0.25);
+    display: flex; align-items: center; gap: 12px;
   }
-  header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 12px; }
-  header h1 span { font-size: 0.75rem; font-weight: 400; opacity: 0.7; margin-left: 8px; }
-
-  .search-row { display: flex; gap: 8px; }
+  header h1 { font-size: 1rem; font-weight: 700; white-space: nowrap; }
+  header h1 span { font-size: 0.72rem; font-weight: 400; opacity: 0.65; margin-left: 6px; }
+  .search-row { display: flex; gap: 8px; flex: 1; }
   #searchInput {
-    flex: 1; padding: 10px 14px; border-radius: 8px; border: none;
-    font-size: 0.95rem; background: rgba(255,255,255,0.15); color: #fff;
-    outline: none; transition: background 0.2s;
+    flex: 1; padding: 8px 14px; border-radius: 8px; border: none;
+    font-size: 0.9rem; background: rgba(255,255,255,0.15); color: #fff; outline: none;
   }
-  #searchInput::placeholder { color: rgba(255,255,255,0.55); }
+  #searchInput::placeholder { color: rgba(255,255,255,0.5); }
   #searchInput:focus { background: rgba(255,255,255,0.25); }
-  #clearBtn {
-    padding: 10px 14px; border-radius: 8px; border: none;
+  .hdr-btn {
+    padding: 8px 12px; border-radius: 8px; border: none;
     background: rgba(255,255,255,0.15); color: #fff; cursor: pointer;
-    font-size: 0.85rem; transition: background 0.2s;
+    font-size: 0.8rem; white-space: nowrap; transition: background 0.2s;
   }
-  #clearBtn:hover { background: rgba(255,255,255,0.25); }
-  #favToggleBtn {
-    padding: 10px 14px; border-radius: 8px; border: none;
-    background: rgba(255,255,255,0.15); color: #fff; cursor: pointer;
-    font-size: 0.85rem; transition: all 0.2s; white-space: nowrap;
-  }
-  #favToggleBtn:hover { background: rgba(255,255,255,0.25); }
-  #favToggleBtn.active { background: var(--fav); color: #fff; }
+  .hdr-btn:hover { background: rgba(255,255,255,0.25); }
+  #favToggleBtn.active { background: var(--fav); }
 
-  .filter-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-  .filter-btn {
-    padding: 5px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);
-    background: transparent; color: rgba(255,255,255,0.8); cursor: pointer;
-    font-size: 0.75rem; transition: all 0.15s; white-space: nowrap;
-  }
-  .filter-btn.active, .filter-btn:hover { background: rgba(255,255,255,0.2); color: #fff; border-color: rgba(255,255,255,0.6); }
-  .filter-btn.active { background: var(--accent2); border-color: var(--accent2); }
+  /* BODY LAYOUT */
+  .body-wrap { display: flex; flex: 1; min-height: 0; }
 
-  /* STATS */
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w); flex-shrink: 0;
+    background: var(--surface); border-right: 1px solid var(--border);
+    position: sticky; top: 53px; height: calc(100vh - 53px);
+    overflow-y: auto; display: flex; flex-direction: column;
+  }
+  .sidebar-section { border-bottom: 1px solid var(--border); padding: 10px 0; }
+  .sidebar-label {
+    font-size: 0.68rem; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.5px; text-transform: uppercase;
+    padding: 4px 14px 6px; display: block;
+  }
+  .side-btn {
+    display: block; width: 100%; text-align: left;
+    padding: 7px 14px; border: none; background: none; cursor: pointer;
+    font-size: 0.8rem; color: var(--text); transition: background 0.12s;
+    border-left: 3px solid transparent; line-height: 1.3;
+  }
+  .side-btn:hover { background: var(--tag1); }
+  .side-btn.active { background: var(--tag1); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .side-btn.fav-active { border-left-color: var(--fav); color: var(--fav) !important; background: #fff8ee; }
+
+  /* CONTENT AREA */
+  .content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .stats-bar {
-    display: flex; gap: 16px; padding: 10px 20px;
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    font-size: 0.8rem; color: var(--muted); align-items: center;
+    padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
+    font-size: 0.78rem; color: var(--muted); position: sticky; top: 53px; z-index: 100;
   }
   .stats-bar strong { color: var(--primary); }
-
-  /* MAIN */
-  main { max-width: 960px; margin: 0 auto; padding: 16px 16px 60px; }
+  main { padding: 14px 16px 60px; }
 
   /* GROUP CARD */
   .group-card {
-    background: var(--surface); border-radius: 12px; margin-bottom: 12px;
+    background: var(--surface); border-radius: 10px; margin-bottom: 10px;
     box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden;
     transition: border-color 0.2s;
   }
   .group-card.favorited { border-color: var(--fav); }
-
   .group-header {
-    display: flex; align-items: center; gap: 10px; padding: 14px 16px;
-    cursor: pointer; user-select: none; transition: background 0.15s;
+    display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+    cursor: pointer; user-select: none; transition: background 0.12s;
   }
   .group-header:hover { background: #f7fafc; }
   .group-code {
-    font-size: 0.78rem; font-weight: 700; color: var(--primary);
+    font-size: 0.76rem; font-weight: 700; color: var(--primary);
     background: var(--tag1); border: 1px solid var(--border);
-    padding: 3px 8px; border-radius: 5px; white-space: nowrap; font-family: monospace;
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap; font-family: monospace;
   }
-  .group-name { flex: 1; font-size: 0.95rem; font-weight: 600; }
-  .group-cat {
-    font-size: 0.72rem; color: var(--accent); background: var(--tag1);
-    padding: 2px 8px; border-radius: 12px; white-space: nowrap;
-  }
-  .group-count { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
-  .chevron { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; }
+  .group-name { flex: 1; font-size: 0.92rem; font-weight: 600; }
+  .group-cat { font-size: 0.7rem; color: var(--accent); background: var(--tag1); padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+  .group-count { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+  .chevron { color: var(--muted); font-size: 0.75rem; transition: transform 0.2s; }
   .group-card.open .chevron { transform: rotate(180deg); }
 
-  /* FAV BUTTON */
   .fav-btn {
-    background: none; border: none; cursor: pointer;
-    font-size: 1.1rem; padding: 2px 4px; line-height: 1;
-    opacity: 0.35; transition: opacity 0.15s, transform 0.15s;
-    flex-shrink: 0;
+    background: none; border: none; cursor: pointer; font-size: 1rem;
+    padding: 2px 3px; line-height: 1; opacity: 0.3; transition: opacity 0.15s, transform 0.15s; flex-shrink: 0;
   }
   .fav-btn:hover { opacity: 0.7; transform: scale(1.2); }
   .fav-btn.on { opacity: 1; }
 
-  /* ITEMS TABLE */
   .items-table { display: none; border-top: 1px solid var(--border); overflow-x: auto; }
   .group-card.open .items-table { display: block; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
   thead tr { background: #f0f4f8; }
-  th { padding: 8px 10px; text-align: left; font-weight: 600; color: var(--muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
-  td { padding: 8px 10px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+  th { padding: 7px 9px; text-align: left; font-weight: 600; color: var(--muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
+  td { padding: 7px 9px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #f7fafc; }
-
-  .code-cell { font-family: monospace; font-size: 0.78rem; color: var(--primary); font-weight: 600; }
-  .price-cell { text-align: right; font-variant-numeric: tabular-nums; }
-  .price-val { font-weight: 600; color: var(--text); }
-  .price-unit { font-size: 0.7rem; color: var(--muted); }
+  .code-cell { font-family: monospace; font-size: 0.76rem; color: var(--primary); font-weight: 600; }
+  .price-cell { text-align: right; }
+  .price-val { font-weight: 600; }
+  .price-unit { font-size: 0.68rem; color: var(--muted); }
   .rv-cell { text-align: right; color: var(--accent); font-weight: 500; }
-  .section-badge {
-    display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;
-  }
+  .section-badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
   .s1 { background: var(--tag1); color: var(--tag1b); }
   .s2 { background: var(--tag2); color: var(--tag2b); }
 
-  /* FAV EMPTY */
   .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
   .empty .icon { font-size: 3rem; margin-bottom: 12px; }
-  .empty p { font-size: 0.95rem; }
 
-  /* TOAST */
   #toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: #2c3e50; color: #fff; padding: 10px 20px; border-radius: 20px;
-    font-size: 0.85rem; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999;
-    white-space: nowrap;
+    font-size: 0.83rem; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 
-  @media (max-width: 600px) {
-    .group-cat { display: none; }
-    th:nth-child(3), td:nth-child(3),
-    th:nth-child(5), td:nth-child(5) { display: none; }
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    header h1 span { display: none; }
   }
 </style>
 </head>
@@ -164,24 +156,36 @@
   <h1>검체검사 보험 수가 조회 <span>장구분 02 · 절구분 01/02</span></h1>
   <div class="search-row">
     <input id="searchInput" type="search" placeholder="검사명 또는 수가코드 검색..." autocomplete="off">
-    <button id="favToggleBtn">⭐ 즐겨찾기</button>
-    <button id="clearBtn">지우기</button>
-  </div>
-  <div style="font-size:0.7rem;opacity:0.6;margin-top:8px;margin-bottom:2px;">세분류</div>
-  <div class="filter-row" id="filterRow">
-    <button class="filter-btn active" data-cat="">전체</button>
-  </div>
-  <div style="font-size:0.7rem;opacity:0.6;margin-top:8px;margin-bottom:2px;">[ ] 검사방법</div>
-  <div class="filter-row" id="bracketRow">
-    <button class="filter-btn b-btn active" data-bracket="">전체</button>
+    <button class="hdr-btn" id="favToggleBtn">⭐ 즐겨찾기</button>
+    <button class="hdr-btn" id="clearBtn">초기화</button>
   </div>
 </header>
 
-<div class="stats-bar" id="statsBar">
-  <span>불러오는 중...</span>
-</div>
+<div class="body-wrap">
 
-<main id="main"></main>
+  <!-- 왼쪽 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <span class="sidebar-label">세분류</span>
+      <div id="catList">
+        <button class="side-btn active" data-cat="">전체</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">[ ] 검사방법</span>
+      <div id="bracketList">
+        <button class="side-btn b-btn active" data-bracket="">전체</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 오른쪽 콘텐츠 -->
+  <div class="content">
+    <div class="stats-bar" id="statsBar">불러오는 중...</div>
+    <main id="main"></main>
+  </div>
+
+</div>
 
 <div id="toast"></div>
 
@@ -209,7 +213,6 @@ function toggleFav(groupCode, event) {
     showToast('⭐ 즐겨찾기에 추가했습니다');
   }
   saveFavs();
-  // Update just this card's fav button & border (no full re-render)
   const card = document.querySelector(`.group-card[data-group="${groupCode}"]`);
   if (card) {
     const btn = card.querySelector('.fav-btn');
@@ -225,7 +228,7 @@ function toggleFav(groupCode, event) {
 function updateFavBtn() {
   const btn = document.getElementById('favToggleBtn');
   btn.classList.toggle('active', showFavOnly);
-  btn.textContent = showFavOnly ? '⭐ 즐겨찾기 보는중' : `⭐ 즐겨찾기 ${favorites.size > 0 ? '('+favorites.size+')' : ''}`;
+  btn.textContent = showFavOnly ? '⭐ 즐겨찾기 보는중' : `⭐ 즐겨찾기${favorites.size > 0 ? ' ('+favorites.size+')' : ''}`;
 }
 
 function showToast(msg) {
@@ -247,52 +250,46 @@ function highlight(text, q) {
   return text.replace(new RegExp(esc, 'gi'), m => `<mark>${m}</mark>`);
 }
 
-function buildCategories() {
+function buildSidebar() {
+  // 세분류
   const cats = [...new Set(LAB_DATA.map(d => d.cat).filter(Boolean))].sort();
-  const row = document.getElementById('filterRow');
+  const catList = document.getElementById('catList');
   cats.forEach(cat => {
     const btn = document.createElement('button');
-    btn.className = 'filter-btn';
+    btn.className = 'side-btn';
     btn.dataset.cat = cat;
     btn.textContent = cat;
     btn.onclick = () => selectCat(cat);
-    row.appendChild(btn);
+    catList.appendChild(btn);
   });
-}
 
-function buildBrackets() {
+  // [ ] 검사방법
   const re = /\[([^\]]+)\]/;
-  const brackets = [...new Set(LAB_DATA.map(g => { const m = re.exec(g.n); return m ? m[1] : null; }).filter(Boolean))].sort();
-  const row = document.getElementById('bracketRow');
+  const brackets = [...new Set(LAB_DATA.map(g => { const m = re.exec(g.n); return m ? m[1] : null; }).filter(v => v && !v.includes('Gene')))].sort();
+  const brList = document.getElementById('bracketList');
   brackets.forEach(br => {
     const btn = document.createElement('button');
-    btn.className = 'filter-btn b-btn';
+    btn.className = 'side-btn b-btn';
     btn.dataset.bracket = br;
     btn.textContent = br;
     btn.onclick = () => selectBracket(br);
-    row.appendChild(btn);
+    brList.appendChild(btn);
   });
-}
-
-function selectBracket(br) {
-  currentBracket = br;
-  currentPage = 0;
-  document.querySelectorAll('.b-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.bracket === br);
-  });
-  render();
 }
 
 function selectCat(cat) {
   currentCat = cat;
   currentBracket = '';
   currentPage = 0;
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.cat === cat);
-  });
-  document.querySelectorAll('.b-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.bracket === '');
-  });
+  document.querySelectorAll('#catList .side-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
+  render();
+}
+
+function selectBracket(br) {
+  currentBracket = br;
+  currentPage = 0;
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === br));
   render();
 }
 
@@ -308,7 +305,6 @@ function getFiltered() {
       if (!m || m[1] !== currentBracket) return false;
     }
     if (!q) return true;
-    // 그룹명 또는 5자리 코드 기준으로만 검색
     if (g.n.toLowerCase().includes(q)) return true;
     if (groupCode.toLowerCase().includes(q)) return true;
     return false;
@@ -322,24 +318,23 @@ function render() {
   const stats = document.getElementById('statsBar');
 
   const totalItems = filtered.reduce((s, g) => s + g.i.length, 0);
-  let statText = `검사그룹 <strong>${filtered.length.toLocaleString()}</strong>개 &nbsp;·&nbsp; 수가코드 <strong>${totalItems.toLocaleString()}</strong>개`;
-  if (showFavOnly) statText += ` &nbsp;·&nbsp; ⭐ 즐겨찾기만 표시`;
-  if (currentBracket) statText += ` &nbsp;·&nbsp; [<strong>${currentBracket}</strong>]`;
-  if (q) statText += ` &nbsp;·&nbsp; "<strong>${q}</strong>" 검색 결과`;
+  let statText = `검사그룹 <strong>${filtered.length.toLocaleString()}</strong>개 · 수가코드 <strong>${totalItems.toLocaleString()}</strong>개`;
+  if (currentCat) statText += ` · <strong>${currentCat}</strong>`;
+  if (currentBracket) statText += ` · [<strong>${currentBracket}</strong>]`;
+  if (showFavOnly) statText += ` · ⭐ 즐겨찾기`;
+  if (q) statText += ` · "<strong>${q}</strong>"`;
   stats.innerHTML = statText;
 
   if (filtered.length === 0) {
     main.innerHTML = showFavOnly
-      ? `<div class="empty"><div class="icon">⭐</div><p>즐겨찾기한 항목이 없습니다<br><small style="font-size:0.82rem;margin-top:6px;display:block">각 검사 항목의 ☆ 버튼을 눌러 추가하세요</small></p></div>`
+      ? `<div class="empty"><div class="icon">⭐</div><p>즐겨찾기한 항목이 없습니다<br><small>각 검사 항목의 ☆ 버튼을 눌러 추가하세요</small></p></div>`
       : `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`;
     return;
   }
 
-  // 페이지네이션: 현재 페이지까지의 항목만 렌더
   const end = (currentPage + 1) * PAGE_SIZE;
   const pageItems = filtered.slice(0, end);
   const hasMore = filtered.length > end;
-
   const fragment = document.createDocumentFragment();
 
   pageItems.forEach(g => {
@@ -362,30 +357,21 @@ function render() {
       </div>
       <div class="items-table">
         <table>
-          <thead>
-            <tr>
-              <th>수가코드</th>
-              <th>검사명</th>
-              <th>분류번호</th>
-              <th>의원단가</th>
-              <th>병원급단가</th>
-              <th>상대가치</th>
-              <th>절구분</th>
-              <th>적용일자</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>수가코드</th><th>검사명</th><th>분류번호</th>
+            <th>의원단가</th><th>병원급단가</th><th>상대가치</th><th>절구분</th><th>적용일자</th>
+          </tr></thead>
           <tbody>
-            ${g.i.map(it => `
-              <tr>
-                <td class="code-cell">${highlight(it.c, q)}</td>
-                <td>${highlight(it.n, q)}</td>
-                <td style="color:#6c7a89;font-size:0.78rem">${it.cl || '-'}</td>
-                <td class="price-cell">${it.p1 != null ? `<span class="price-val">${fmt(it.p1)}</span><span class="price-unit">원</span>` : '-'}</td>
-                <td class="price-cell">${it.p2 != null ? `<span class="price-val">${fmt(it.p2)}</span><span class="price-unit">원</span>` : '-'}</td>
-                <td class="rv-cell">${it.rv != null ? it.rv.toFixed(2) : '-'}</td>
-                <td><span class="section-badge ${it.s === '절1' ? 's1' : 's2'}">${it.s}</span></td>
-                <td style="font-size:0.75rem;color:#6c7a89">${it.d}</td>
-              </tr>`).join('')}
+            ${g.i.map(it => `<tr>
+              <td class="code-cell">${highlight(it.c, q)}</td>
+              <td>${highlight(it.n, q)}</td>
+              <td style="color:#6c7a89;font-size:0.76rem">${it.cl || '-'}</td>
+              <td class="price-cell">${it.p1 != null ? `<span class="price-val">${fmt(it.p1)}</span><span class="price-unit">원</span>` : '-'}</td>
+              <td class="price-cell">${it.p2 != null ? `<span class="price-val">${fmt(it.p2)}</span><span class="price-unit">원</span>` : '-'}</td>
+              <td class="rv-cell">${it.rv != null ? it.rv.toFixed(2) : '-'}</td>
+              <td><span class="section-badge ${it.s === '절1' ? 's1' : 's2'}">${it.s}</span></td>
+              <td style="font-size:0.73rem;color:#6c7a89">${it.d}</td>
+            </tr>`).join('')}
           </tbody>
         </table>
       </div>`;
@@ -394,13 +380,10 @@ function render() {
     fragment.appendChild(card);
   });
 
-  // 더보기 버튼
   if (hasMore) {
     const more = document.createElement('div');
     more.style.cssText = 'text-align:center;padding:16px';
-    more.innerHTML = `<button onclick="loadMore()" style="padding:10px 32px;border-radius:20px;border:1.5px solid #2980b9;background:#fff;color:#2980b9;font-size:0.9rem;cursor:pointer;font-weight:600;">
-      더 보기 (${filtered.length - end}개 남음)
-    </button>`;
+    more.innerHTML = `<button onclick="loadMore()" style="padding:9px 28px;border-radius:20px;border:1.5px solid #2980b9;background:#fff;color:#2980b9;font-size:0.88rem;cursor:pointer;font-weight:600;">더 보기 (${filtered.length - end}개 남음)</button>`;
     fragment.appendChild(more);
   }
 
@@ -408,51 +391,31 @@ function render() {
   main.appendChild(fragment);
 }
 
-function loadMore() {
-  currentPage++;
-  render();
-}
+function loadMore() { currentPage++; render(); }
+function toggleCard(header) { header.closest('.group-card').classList.toggle('open'); }
 
-function toggleCard(header) {
-  header.closest('.group-card').classList.toggle('open');
-}
-
-// Search
 let searchTimer;
 document.getElementById('searchInput').addEventListener('input', e => {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    currentQuery = e.target.value;
-    currentPage = 0;
-    render();
-  }, 200);
+  searchTimer = setTimeout(() => { currentQuery = e.target.value; currentPage = 0; render(); }, 200);
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
   document.getElementById('searchInput').value = '';
-  currentQuery = '';
-  currentCat = '';
-  currentBracket = '';
-  currentPage = 0;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
+  currentQuery = ''; currentCat = ''; currentBracket = ''; currentPage = 0; showFavOnly = false;
+  document.querySelectorAll('#catList .side-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
   document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
-  render();
+  updateFavBtn(); render();
 });
 
 document.getElementById('favToggleBtn').addEventListener('click', () => {
-  showFavOnly = !showFavOnly;
-  currentPage = 0;
-  updateFavBtn();
-  render();
+  showFavOnly = !showFavOnly; currentPage = 0; updateFavBtn(); render();
 });
 
-// 전체 버튼
-document.querySelector('.filter-btn[data-cat=""]').addEventListener('click', () => selectCat(''));
+document.querySelector('#catList .side-btn[data-cat=""]').addEventListener('click', () => selectCat(''));
 document.querySelector('.b-btn[data-bracket=""]').addEventListener('click', () => selectBracket(''));
 
-// Init
-buildCategories();
-buildBrackets();
+buildSidebar();
 updateFavBtn();
 render();
 </script>
