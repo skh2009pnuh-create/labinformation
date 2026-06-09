@@ -142,6 +142,12 @@
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
+  .br-group-label {
+    font-size: 0.68rem; font-weight: 700; color: var(--primary);
+    padding: 6px 14px 3px; opacity: 0.7; letter-spacing: 0.3px;
+    border-top: 1px solid var(--border); margin-top: 2px;
+  }
+  .br-group-label:first-child { border-top: none; margin-top: 0; }
 
   /* 계층형 세분류 */
   .side-big { font-weight: 700; color: var(--primary); font-size: 0.82rem; background: #f7fafc; }
@@ -174,6 +180,14 @@
   <!-- 왼쪽 사이드바 -->
   <aside class="sidebar">
     <div class="sidebar-section">
+      <span class="sidebar-label">절구분</span>
+      <div id="sectionList">
+        <button class="side-btn sec-btn active" data-sec="">전체</button>
+        <button class="side-btn sec-btn" data-sec="절1">절1</button>
+        <button class="side-btn sec-btn" data-sec="절2">절2</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
       <span class="sidebar-label">세분류</span>
       <div id="catList">
         <button class="side-btn active" data-cat="">전체</button>
@@ -183,14 +197,6 @@
       <span class="sidebar-label">[ ] 검사방법</span>
       <div id="bracketList">
         <button class="side-btn b-btn active" data-bracket="">전체</button>
-      </div>
-    </div>
-    <div class="sidebar-section">
-      <span class="sidebar-label">절구분</span>
-      <div id="sectionList">
-        <button class="side-btn sec-btn active" data-sec="">전체</button>
-        <button class="side-btn sec-btn" data-sec="절1">절1</button>
-        <button class="side-btn sec-btn" data-sec="절2">절2</button>
       </div>
     </div>
   </aside>
@@ -313,30 +319,101 @@ function buildSidebar() {
   const brackets = [...new Set(LAB_DATA.map(g => { const m = re.exec(g.n); return m ? m[1] : null; })
     .filter(v => v && !v.includes('Gene') && !EXCLUDE_BRACKETS.has(v)))].sort();
   const brList = document.getElementById('bracketList');
-  // 핵산증폭 특수 항목 먼저 추가
-  const nukBtn = document.createElement('button');
-  nukBtn.className = 'side-btn b-btn';
-  nukBtn.dataset.bracket = '핵산증폭';
-  nukBtn.textContent = '핵산증폭 (전체)';
-  nukBtn.onclick = () => selectBracket('핵산증폭');
-  brList.appendChild(nukBtn);
+  // 검사방법 그룹 정의
+  const BR_GROUPS = [
+    { label: '핵산증폭', special: true, items: [
+      { key: '핵산증폭', label: '핵산증폭 (전체)', special: true },
+      { key: '핵산증폭(고해상도)', label: '고해상도' },
+      { key: '핵산증폭(저해상도)', label: '저해상도' },
+    ]},
+    { label: '중합효소연쇄반응', items: [
+      { key: '중합효소연쇄반응법', label: 'PCR법' },
+      { key: '실시간중합효소연쇄반응법', label: '실시간 PCR' },
+      { key: '이중중합효소연쇄반응법', label: '이중 PCR' },
+      { key: '실시간 이중중합효소연쇄반응법', label: '실시간 이중 PCR' },
+      { key: '역전사중합효소연쇄반응법', label: 'RT-PCR' },
+      { key: '실시간역전사중합효소연쇄반응법', label: '실시간 RT-PCR' },
+      { key: '역전사 이중중합효소연쇄반응법', label: '역전사 이중 PCR' },
+      { key: '역전사중합효소연쇄반응교잡반응법', label: 'RT-PCR 교잡' },
+      { key: '중합효소연쇄반응교잡반응법', label: 'PCR 교잡' },
+      { key: '중합효소연쇄반응-제한효소절편길이다형법', label: 'PCR-RFLP' },
+    ]},
+    { label: '정밀면역검사', items: [
+      { key: '정밀면역검사', label: '정밀면역검사' },
+      { key: '정밀면역검사(정량)', label: '정량' },
+      { key: '정밀면역검사(정량)-간이검사', label: '정량-간이' },
+      { key: '정밀면역검사(정성)- 간이검사', label: '정성-간이' },
+      { key: '정밀면역검사-간이검사', label: '간이검사' },
+      { key: '정밀연역검사', label: '정밀연역검사' },
+    ]},
+    { label: '일반면역검사', items: [
+      { key: '일반면역검사', label: '일반면역검사' },
+      { key: '일반면역검사(간이검사)', label: '간이검사' },
+      { key: '일반면역검사-간이검사', label: '간이검사(2)' },
+    ]},
+    { label: '정밀분광/질량분석', items: [
+      { key: '정밀분광-질량검사', label: '질량검사' },
+      { key: '정밀분광-질량분석', label: '질량분석' },
+      { key: '정밀분광-질량분석(정량)', label: '질량분석(정량)' },
+      { key: '정밀분광/질량분석', label: '정밀분광/질량' },
+    ]},
+    { label: '염기서열', items: [
+      { key: '염기서열검사', label: '염기서열검사' },
+      { key: '염기서열분석', label: '염기서열분석' },
+    ]},
+    { label: '화학반응', items: [
+      { key: '화학반응-장비측정', label: '장비측정' },
+      { key: '화학반응-장비측정(간이검사)', label: '장비측정(간이)' },
+      { key: '화학반응-육안검사', label: '육안검사' },
+      { key: '화학반응-육안검사(정성)', label: '육안검사(정성)' },
+      { key: '화학반응-육안검사/화학반응-장비측정', label: '육안·장비' },
+    ]},
+    { label: '혈구세포', items: [
+      { key: '혈구세포-장비측정', label: '장비측정' },
+      { key: '혈구세포-현미경', label: '현미경' },
+    ]},
+    { label: '관찰판정', items: [
+      { key: '관찰판정-육안·장비측정', label: '육안·장비측정' },
+      { key: '관찰판정-현미경', label: '현미경' },
+    ]},
+    { label: '기타', items: [
+      { key: '간이검사', label: '간이검사' },
+      { key: '단위당', label: '단위당' },
+      { key: '동결절편당', label: '동결절편당' },
+      { key: '말초혈액도말', label: '말초혈액도말' },
+      { key: '면역형광법', label: '면역형광법' },
+      { key: '배양검사 포함', label: '배양검사 포함' },
+      { key: '분획분석', label: '분획분석' },
+      { key: '세포기능검사', label: '세포기능검사' },
+      { key: '염색별', label: '염색별' },
+      { key: '웨스턴블롯', label: '웨스턴블롯' },
+      { key: '유세포분석', label: '유세포분석' },
+      { key: '유세포분석법', label: '유세포분석법' },
+      { key: '응고기능검사', label: '응고기능검사' },
+      { key: '응고억제인자선별검사', label: '응고억제인자선별' },
+      { key: '전기영동 또는 TLC법', label: '전기영동/TLC' },
+      { key: '종목당', label: '종목당' },
+      { key: '특수배양', label: '특수배양' },
+      { key: '항체별', label: '항체별' },
+      { key: '혈액형별 각각 산정', label: '혈액형별' },
+    ]},
+  ];
 
-  brackets.filter(br => !br.startsWith('핵산증폭')).forEach(br => {
-    const btn = document.createElement('button');
-    btn.className = 'side-btn b-btn';
-    btn.dataset.bracket = br;
-    btn.textContent = br;
-    btn.onclick = () => selectBracket(br);
-    brList.appendChild(btn);
-  });
-  // 핵산증폭 세부 항목도 추가
-  brackets.filter(br => br.startsWith('핵산증폭') && br !== '핵산증폭').forEach(br => {
-    const btn = document.createElement('button');
-    btn.className = 'side-btn b-btn';
-    btn.dataset.bracket = br;
-    btn.textContent = '  ' + br;
-    btn.onclick = () => selectBracket(br);
-    brList.appendChild(btn);
+  BR_GROUPS.forEach(group => {
+    // 그룹 라벨
+    const label = document.createElement('div');
+    label.className = 'br-group-label';
+    label.textContent = group.label;
+    brList.appendChild(label);
+
+    group.items.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'side-btn b-btn';
+      btn.dataset.bracket = item.key;
+      btn.textContent = item.label;
+      btn.onclick = () => selectBracket(item.key);
+      brList.appendChild(btn);
+    });
   });
 }
 
