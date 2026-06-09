@@ -167,8 +167,13 @@
     <button id="favToggleBtn">⭐ 즐겨찾기</button>
     <button id="clearBtn">지우기</button>
   </div>
+  <div style="font-size:0.7rem;opacity:0.6;margin-top:8px;margin-bottom:2px;">세분류</div>
   <div class="filter-row" id="filterRow">
     <button class="filter-btn active" data-cat="">전체</button>
+  </div>
+  <div style="font-size:0.7rem;opacity:0.6;margin-top:8px;margin-bottom:2px;">[ ] 검사방법</div>
+  <div class="filter-row" id="bracketRow">
+    <button class="filter-btn b-btn active" data-bracket="">전체</button>
   </div>
 </header>
 
@@ -183,8 +188,11 @@
 <script src="LAB_DATA.js"></script>
 <script>
 let currentCat = '';
+let currentBracket = '';
 let currentQuery = '';
 let showFavOnly = false;
+let currentPage = 0;
+const PAGE_SIZE = 40;
 let favorites = new Set(JSON.parse(localStorage.getItem('lab_favs') || '[]'));
 
 function saveFavs() {
@@ -252,20 +260,53 @@ function buildCategories() {
   });
 }
 
+function buildBrackets() {
+  const re = /\[([^\]]+)\]/;
+  const brackets = [...new Set(LAB_DATA.map(g => { const m = re.exec(g.n); return m ? m[1] : null; }).filter(Boolean))].sort();
+  const row = document.getElementById('bracketRow');
+  brackets.forEach(br => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn b-btn';
+    btn.dataset.bracket = br;
+    btn.textContent = br;
+    btn.onclick = () => selectBracket(br);
+    row.appendChild(btn);
+  });
+}
+
+function selectBracket(br) {
+  currentBracket = br;
+  currentPage = 0;
+  document.querySelectorAll('.b-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.bracket === br);
+  });
+  render();
+}
+
 function selectCat(cat) {
   currentCat = cat;
+  currentBracket = '';
+  currentPage = 0;
   document.querySelectorAll('.filter-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  document.querySelectorAll('.b-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.bracket === '');
   });
   render();
 }
 
 function getFiltered() {
   const q = currentQuery.trim().toLowerCase();
+  const brRe = /\[([^\]]+)\]/;
   return LAB_DATA.filter(g => {
     const groupCode = g.i[0]?.c?.slice(0, 5) || '';
     if (showFavOnly && !favorites.has(groupCode)) return false;
     if (currentCat && g.cat !== currentCat) return false;
+    if (currentBracket) {
+      const m = brRe.exec(g.n);
+      if (!m || m[1] !== currentBracket) return false;
+    }
     if (!q) return true;
     // 그룹명 또는 5자리 코드 기준으로만 검색
     if (g.n.toLowerCase().includes(q)) return true;
@@ -283,6 +324,7 @@ function render() {
   const totalItems = filtered.reduce((s, g) => s + g.i.length, 0);
   let statText = `검사그룹 <strong>${filtered.length.toLocaleString()}</strong>개 &nbsp;·&nbsp; 수가코드 <strong>${totalItems.toLocaleString()}</strong>개`;
   if (showFavOnly) statText += ` &nbsp;·&nbsp; ⭐ 즐겨찾기만 표시`;
+  if (currentBracket) statText += ` &nbsp;·&nbsp; [<strong>${currentBracket}</strong>]`;
   if (q) statText += ` &nbsp;·&nbsp; "<strong>${q}</strong>" 검색 결과`;
   stats.innerHTML = statText;
 
@@ -293,9 +335,14 @@ function render() {
     return;
   }
 
+  // 페이지네이션: 현재 페이지까지의 항목만 렌더
+  const end = (currentPage + 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(0, end);
+  const hasMore = filtered.length > end;
+
   const fragment = document.createDocumentFragment();
 
-  filtered.forEach(g => {
+  pageItems.forEach(g => {
     const card = document.createElement('div');
     const groupCode = g.i[0]?.c?.slice(0, 5) || '';
     const isFav = favorites.has(groupCode);
@@ -347,8 +394,23 @@ function render() {
     fragment.appendChild(card);
   });
 
+  // 더보기 버튼
+  if (hasMore) {
+    const more = document.createElement('div');
+    more.style.cssText = 'text-align:center;padding:16px';
+    more.innerHTML = `<button onclick="loadMore()" style="padding:10px 32px;border-radius:20px;border:1.5px solid #2980b9;background:#fff;color:#2980b9;font-size:0.9rem;cursor:pointer;font-weight:600;">
+      더 보기 (${filtered.length - end}개 남음)
+    </button>`;
+    fragment.appendChild(more);
+  }
+
   main.innerHTML = '';
   main.appendChild(fragment);
+}
+
+function loadMore() {
+  currentPage++;
+  render();
 }
 
 function toggleCard(header) {
@@ -361,6 +423,7 @@ document.getElementById('searchInput').addEventListener('input', e => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
     currentQuery = e.target.value;
+    currentPage = 0;
     render();
   }, 200);
 });
@@ -368,17 +431,28 @@ document.getElementById('searchInput').addEventListener('input', e => {
 document.getElementById('clearBtn').addEventListener('click', () => {
   document.getElementById('searchInput').value = '';
   currentQuery = '';
+  currentCat = '';
+  currentBracket = '';
+  currentPage = 0;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
   render();
 });
 
 document.getElementById('favToggleBtn').addEventListener('click', () => {
   showFavOnly = !showFavOnly;
+  currentPage = 0;
   updateFavBtn();
   render();
 });
 
+// 전체 버튼
+document.querySelector('.filter-btn[data-cat=""]').addEventListener('click', () => selectCat(''));
+document.querySelector('.b-btn[data-bracket=""]').addEventListener('click', () => selectBracket(''));
+
 // Init
 buildCategories();
+buildBrackets();
 updateFavBtn();
 render();
 </script>
