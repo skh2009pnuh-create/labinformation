@@ -20,12 +20,13 @@
   --tag2b: #1e8449;
   --shadow: 0 2px 8px rgba(26,82,118,0.10);
   --fav: #f39c12;
+  --note: #fff8e1;
+  --noteb: #e67e22;
   --sidebar-w: 220px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-/* TOP HEADER */
 header {
   background: var(--primary); color: #fff;
   padding: 14px 20px; position: sticky; top: 0; z-index: 200;
@@ -53,7 +54,7 @@ header h1 span { font-size: 0.72rem; font-weight: 400; opacity: 0.65; margin-lef
 .tab-nav {
   background: var(--primary);
   border-top: 1px solid rgba(255,255,255,0.15);
-  display: flex; gap: 0; padding: 0 20px;
+  display: flex; padding: 0 20px;
   position: sticky; top: 54px; z-index: 190;
 }
 .tab-btn {
@@ -64,14 +65,10 @@ header h1 span { font-size: 0.72rem; font-weight: 400; opacity: 0.65; margin-lef
 .tab-btn:hover { color: #fff; }
 .tab-btn.active { color: #fff; border-bottom-color: var(--accent2); }
 
-/* TAB PAGES */
 .tab-page { display: none; }
 .tab-page.active { display: flex; flex: 1; }
-
-/* BODY LAYOUT */
 .body-wrap { display: flex; flex: 1; min-height: 0; flex-direction: column; }
 
-/* SIDEBAR */
 .sidebar {
   width: var(--sidebar-w); flex-shrink: 0;
   background: var(--surface); border-right: 1px solid var(--border);
@@ -92,9 +89,7 @@ header h1 span { font-size: 0.72rem; font-weight: 400; opacity: 0.65; margin-lef
 }
 .side-btn:hover { background: var(--tag1); }
 .side-btn.active { background: var(--tag1); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
-.side-btn.fav-active { border-left-color: var(--fav); color: var(--fav) !important; background: #fff8ee; }
 
-/* CONTENT AREA */
 .content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .stats-bar {
   padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
@@ -103,7 +98,6 @@ header h1 span { font-size: 0.72rem; font-weight: 400; opacity: 0.65; margin-lef
 .stats-bar strong { color: var(--primary); }
 main { padding: 14px 16px 60px; }
 
-/* GROUP CARD */
 .group-card {
   background: var(--surface); border-radius: 10px; margin-bottom: 10px;
   box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden;
@@ -147,6 +141,46 @@ tr:hover td { background: #f7fafc; }
 .section-badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
 .s1 { background: var(--tag1); color: var(--tag1b); }
 .s2 { background: var(--tag2); color: var(--tag2b); }
+
+/* ── 주석 스타일 ── */
+.note-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--noteb); color: #fff; font-size: 0.65rem; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; transition: transform 0.15s;
+  position: relative;
+}
+.note-icon:hover { transform: scale(1.15); }
+
+/* 툴팁 방식 */
+.note-tooltip {
+  position: absolute; left: 24px; top: 50%; transform: translateY(-50%);
+  background: #2c3e50; color: #fff; padding: 8px 12px; border-radius: 8px;
+  font-size: 0.75rem; line-height: 1.5; white-space: normal; width: 320px; max-width: 80vw;
+  z-index: 500; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  pointer-events: none;
+}
+.note-icon:hover .note-tooltip,
+.note-icon:focus .note-tooltip { display: block; }
+
+/* 인라인 주석 행 */
+.note-row td {
+  background: var(--note);
+  font-size: 0.76rem;
+  color: #7d4e00;
+  padding: 5px 9px 5px 36px;
+  border-left: 3px solid var(--noteb);
+  line-height: 1.5;
+}
+.note-row-content { display: flex; align-items: flex-start; gap: 6px; }
+.note-row-icon { font-size: 0.8rem; flex-shrink: 0; margin-top: 1px; }
+
+/* 주 배지 (헤더에 표시) */
+.note-badge {
+  font-size: 0.62rem; font-weight: 700; padding: 1px 5px; border-radius: 10px;
+  background: var(--noteb); color: #fff; white-space: nowrap;
+}
+
 .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
 .empty .icon { font-size: 3rem; margin-bottom: 12px; }
 #toast {
@@ -170,10 +204,9 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 .side-sub:hover { color: var(--text); }
 .side-sub.active { color: var(--accent); font-weight: 600; background: var(--tag1); border-left-color: var(--accent); }
 
-/* ===== 고시 이력 탭 스타일 ===== */
+/* ===== 고시 이력 탭 ===== */
 #tab-gosisi { flex-direction: column; }
 .gosisi-wrap { display: flex; flex: 1; min-height: 0; }
-
 .gosisi-sidebar {
   width: 200px; flex-shrink: 0;
   background: var(--surface); border-right: 1px solid var(--border);
@@ -181,46 +214,33 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
   overflow-y: auto;
 }
 .gosisi-sidebar .sidebar-section { border-bottom: 1px solid var(--border); padding: 10px 0; }
-
 .gosisi-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-
 .gosisi-search-bar {
   padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border);
   position: sticky; top: 90px; z-index: 100;
-  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  display: flex; gap: 8px; align-items: center;
 }
 #gosisiSearch {
-  flex: 1; min-width: 180px; padding: 8px 12px; border-radius: 8px;
+  flex: 1; padding: 8px 12px; border-radius: 8px;
   border: 1.5px solid var(--border); font-size: 0.88rem; outline: none;
 }
 #gosisiSearch:focus { border-color: var(--accent); }
-.g-filter-btn {
-  padding: 6px 12px; border-radius: 20px; border: 1.5px solid var(--border);
-  background: #fff; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; white-space: nowrap;
-}
-.g-filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
 .gosisi-stats {
   padding: 6px 14px; font-size: 0.75rem; color: var(--muted);
   background: #f7fafc; border-bottom: 1px solid var(--border);
 }
 .gosisi-stats strong { color: var(--primary); }
-
 .gosisi-main { padding: 12px 14px 60px; }
-
-/* 고시 카드 */
 .gosisi-card {
   background: var(--surface); border-radius: 10px; margin-bottom: 8px;
   box-shadow: var(--shadow); border: 1px solid var(--border);
-  border-left: 4px solid var(--border);
-  overflow: hidden;
+  border-left: 4px solid var(--border); overflow: hidden;
 }
 .gosisi-card.type-신설 { border-left-color: #27ae60; }
 .gosisi-card.type-변경 { border-left-color: #2980b9; }
 .gosisi-card.type-삭제 { border-left-color: #e74c3c; }
 .gosisi-card.type-비급여전환 { border-left-color: #e67e22; }
 .gosisi-card.type-신의료기술 { border-left-color: #8e44ad; }
-
 .gosisi-card-header {
   display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
   cursor: pointer; user-select: none;
@@ -235,13 +255,8 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 .gosisi-name { font-size: 0.88rem; font-weight: 600; line-height: 1.4; }
 .gosisi-sub { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .gosisi-date { font-size: 0.7rem; color: var(--muted); }
-.gosisi-cat-badge {
-  font-size: 0.68rem; padding: 1px 6px; border-radius: 10px; font-weight: 600;
-  background: #f0f4f8; color: var(--muted);
-}
-.type-badge {
-  font-size: 0.68rem; padding: 2px 7px; border-radius: 10px; font-weight: 700;
-}
+.gosisi-cat-badge { font-size: 0.68rem; padding: 1px 6px; border-radius: 10px; font-weight: 600; background: #f0f4f8; color: var(--muted); }
+.type-badge { font-size: 0.68rem; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
 .type-badge.신설 { background: #eafaf1; color: #1e8449; }
 .type-badge.변경 { background: #eaf4fb; color: #1a5276; }
 .type-badge.삭제 { background: #fdf2f2; color: #c0392b; }
@@ -250,7 +265,6 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 .gosisi-code { font-size: 0.7rem; color: var(--accent); font-family: monospace; }
 .gosisi-chevron { color: var(--muted); font-size: 0.72rem; flex-shrink: 0; transition: transform 0.2s; padding-top: 2px; }
 .gosisi-card.open .gosisi-chevron { transform: rotate(180deg); }
-
 .gosisi-detail {
   display: none; border-top: 1px solid var(--border);
   padding: 10px 14px; font-size: 0.82rem; color: var(--muted);
@@ -258,8 +272,6 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 }
 .gosisi-card.open .gosisi-detail { display: block; }
 .gosisi-detail strong { color: var(--text); }
-
-/* 연도 그룹 헤더 */
 .year-group-header {
   font-size: 0.78rem; font-weight: 700; color: var(--primary);
   padding: 6px 4px 4px; margin-top: 8px; margin-bottom: 4px;
@@ -269,8 +281,7 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 .year-count { font-weight: 400; color: var(--muted); font-size: 0.72rem; }
 
 @media (max-width: 700px) {
-  .sidebar { display: none; }
-  .gosisi-sidebar { display: none; }
+  .sidebar, .gosisi-sidebar { display: none; }
   header h1 span { display: none; }
 }
 </style>
@@ -327,7 +338,6 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
   <!-- ===== 탭2: 고시 이력 ===== -->
   <div id="tab-gosisi" class="tab-page">
     <div class="gosisi-wrap">
-      <!-- 고시 사이드바 -->
       <aside class="gosisi-sidebar">
         <div class="sidebar-section">
           <span class="sidebar-label">변경 유형</span>
@@ -353,13 +363,11 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
           </div>
         </div>
       </aside>
-
-      <!-- 고시 콘텐츠 -->
       <div class="gosisi-content">
         <div class="gosisi-search-bar">
           <input id="gosisiSearch" type="search" placeholder="고시번호, 검사명, 코드 검색..." autocomplete="off">
         </div>
-        <div class="gosisi-stats" id="gosisiStats">불러오는 중...</div>
+        <div class="gosisi-stats" id="gosisiStats"></div>
         <div class="gosisi-main" id="gosisiMain"></div>
       </div>
     </div>
@@ -370,6 +378,7 @@ mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
 <div id="toast"></div>
 
 <script src="LAB_DATA.js"></script>
+<script src="LAB_NOTES.js"></script>
 <script src="GOSISI_DATA.js"></script>
 <script>
 // ===================== 탭 전환 =====================
@@ -379,23 +388,29 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
-    const isGosisi = btn.dataset.tab === 'tab-gosisi';
-    document.getElementById('headerSearchRow').style.display = isGosisi ? 'none' : '';
+    document.getElementById('headerSearchRow').style.display =
+      btn.dataset.tab === 'tab-gosisi' ? 'none' : '';
   });
 });
 
-// ===================== 수가 조회 탭 =====================
-let currentCat = '';
-let currentBracket = '';
-let currentSection = '';
-let currentQuery = '';
-let showFavOnly = false;
-let currentPage = 0;
-const PAGE_SIZE = 40;
+// ===================== 유틸 =====================
+function fmt(n) { if (n == null) return '-'; return n.toLocaleString('ko-KR'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+function highlight(text, q) {
+  if (!q || !text) return text || '';
+  const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(text).replace(new RegExp(esc, 'gi'), m => `<mark>${m}</mark>`);
+}
+
+// ===================== 즐겨찾기 =====================
 let favorites = new Set(JSON.parse(localStorage.getItem('lab_favs') || '[]'));
-
 function saveFavs() { localStorage.setItem('lab_favs', JSON.stringify([...favorites])); }
-
 function toggleFav(groupCode, event) {
   event.stopPropagation();
   if (favorites.has(groupCode)) { favorites.delete(groupCode); showToast('즐겨찾기에서 제거했습니다'); }
@@ -412,28 +427,16 @@ function toggleFav(groupCode, event) {
   if (showFavOnly) render();
   updateFavBtn();
 }
-
 function updateFavBtn() {
   const btn = document.getElementById('favToggleBtn');
   btn.classList.toggle('active', showFavOnly);
   btn.textContent = showFavOnly ? '⭐ 즐겨찾기 보는중' : `⭐ 즐겨찾기${favorites.size > 0 ? ' ('+favorites.size+')' : ''}`;
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 1800);
-}
-
-function fmt(n) { if (n == null) return '-'; return n.toLocaleString('ko-KR'); }
-
-function highlight(text, q) {
-  if (!q) return text;
-  const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return text.replace(new RegExp(esc, 'gi'), m => `<mark>${m}</mark>`);
-}
+// ===================== 수가 조회 상태 =====================
+let currentCat = '', currentBracket = '', currentSection = '';
+let currentQuery = '', showFavOnly = false, currentPage = 0;
+const PAGE_SIZE = 40;
 
 const EXCLUDE_BRACKETS = new Set(['1장기당','bDNA유전자신호증폭법','훼리틴','IGH/IGK gene 동시','IGH gene','UreaseTest','색조, 비중, 세포수, 세포감별계산, 산도','STR Markers','DNA Microarray법','bDNA유전자신호증폭측정법','양측정, 색조검사, 현미경관찰, 산측정, 유산, 잠혈반응, 펩신등','D4Z4 Repeat','IgG','NPN포함','알파지중해빈혈','정성그룹2']);
 
@@ -524,7 +527,11 @@ function buildSidebar() {
   });
 }
 
-function selectSection(sec) { currentSection = sec; currentPage = 0; document.querySelectorAll('.sec-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === sec)); render(); }
+function selectSection(sec) {
+  currentSection = sec; currentPage = 0;
+  document.querySelectorAll('.sec-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
+  render();
+}
 function selectBigCat(big, bigBtn) {
   const subWrap = document.querySelector('.sub-wrap[data-big="' + big + '"]');
   const isOpen = subWrap.classList.contains('open');
@@ -572,6 +579,28 @@ function getFiltered() {
   });
 }
 
+// 주석 관련 유틸
+function getNotes(code) {
+  if (!window.LAB_NOTES) return [];
+  return LAB_NOTES[code] || [];
+}
+
+function buildNoteHTML(notes) {
+  if (!notes || notes.length === 0) return '';
+  const escaped = notes.map(n =>
+    n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  );
+  return escaped.map(n => `
+    <tr class="note-row">
+      <td colspan="8">
+        <div class="note-row-content">
+          <span class="note-row-icon">📌</span>
+          <span>${n}</span>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
 function render() {
   const filtered = getFiltered();
   const q = currentQuery.trim().toLowerCase();
@@ -584,23 +613,53 @@ function render() {
   if (showFavOnly) statText += ` · ⭐ 즐겨찾기`;
   if (q) statText += ` · "<strong>${q}</strong>"`;
   stats.innerHTML = statText;
+
   if (filtered.length === 0) {
     main.innerHTML = showFavOnly
       ? `<div class="empty"><div class="icon">⭐</div><p>즐겨찾기한 항목이 없습니다<br><small>각 검사 항목의 ☆ 버튼을 눌러 추가하세요</small></p></div>`
       : `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`;
     return;
   }
+
   const end = (currentPage + 1) * PAGE_SIZE;
   const pageItems = filtered.slice(0, end);
   const hasMore = filtered.length > end;
   const fragment = document.createDocumentFragment();
+
   pageItems.forEach(g => {
     const card = document.createElement('div');
     const groupCode = g.i[0]?.c?.slice(0, 5) || '';
     const isFav = favorites.has(groupCode);
     const isSingle = g.i.length === 1;
+
+    // 그룹 내 주석 있는 코드 수 확인
+    const noteCount = g.i.filter(it => getNotes(it.c).length > 0).length;
+
     card.className = 'group-card' + (isFav ? ' favorited' : '');
     card.dataset.group = groupCode;
+
+    // 테이블 행 생성
+    const rowsHTML = g.i.map(it => {
+      const notes = getNotes(it.c);
+      const noteRow = buildNoteHTML(notes);
+      const hasNote = notes.length > 0;
+      return `<tr>
+        <td class="code-cell">
+          <span style="display:flex;align-items:center;gap:5px">
+            ${highlight(it.c, q)}
+            ${hasNote ? `<span class="note-badge">주</span>` : ''}
+          </span>
+        </td>
+        <td>${highlight(it.n, q)}</td>
+        <td style="color:#6c7a89;font-size:0.76rem">${it.cl || '-'}</td>
+        <td class="price-cell">${it.p1 != null ? `<span class="price-val">${fmt(it.p1)}</span><span class="price-unit">원</span>` : '-'}</td>
+        <td class="price-cell">${it.p2 != null ? `<span class="price-val">${fmt(it.p2)}</span><span class="price-unit">원</span>` : '-'}</td>
+        <td class="rv-cell">${it.rv != null ? it.rv.toFixed(2) : '-'}</td>
+        <td><span class="section-badge ${it.s === '절1' ? 's1' : 's2'}">${it.s}</span></td>
+        <td style="font-size:0.73rem;color:#6c7a89">${it.d}</td>
+      </tr>${noteRow}`;
+    }).join('');
+
     card.innerHTML = `
       <div class="group-header" onclick="toggleCard(this)">
         <button class="fav-btn ${isFav ? 'on' : ''}" onclick="toggleFav('${groupCode}', event)" title="즐겨찾기">${isFav ? '⭐' : '☆'}</button>
@@ -608,6 +667,7 @@ function render() {
         <span class="group-name">${highlight(g.n, q)}</span>
         ${g.cat ? `<span class="group-cat">${g.cat}</span>` : ''}
         ${!isSingle ? `<span class="group-count">${g.i.length}개</span>` : ''}
+        ${noteCount > 0 ? `<span class="note-badge">주 ${noteCount}</span>` : ''}
         <span class="chevron">▼</span>
       </div>
       <div class="items-table">
@@ -616,29 +676,21 @@ function render() {
             <th>수가코드</th><th>검사명</th><th>분류번호</th>
             <th>의원단가</th><th>병원급단가</th><th>상대가치</th><th>절구분</th><th>적용일자</th>
           </tr></thead>
-          <tbody>
-            ${g.i.map(it => `<tr>
-              <td class="code-cell">${highlight(it.c, q)}</td>
-              <td>${highlight(it.n, q)}</td>
-              <td style="color:#6c7a89;font-size:0.76rem">${it.cl || '-'}</td>
-              <td class="price-cell">${it.p1 != null ? `<span class="price-val">${fmt(it.p1)}</span><span class="price-unit">원</span>` : '-'}</td>
-              <td class="price-cell">${it.p2 != null ? `<span class="price-val">${fmt(it.p2)}</span><span class="price-unit">원</span>` : '-'}</td>
-              <td class="rv-cell">${it.rv != null ? it.rv.toFixed(2) : '-'}</td>
-              <td><span class="section-badge ${it.s === '절1' ? 's1' : 's2'}">${it.s}</span></td>
-              <td style="font-size:0.73rem;color:#6c7a89">${it.d}</td>
-            </tr>`).join('')}
-          </tbody>
+          <tbody>${rowsHTML}</tbody>
         </table>
       </div>`;
+
     if (isSingle) card.classList.add('open');
     fragment.appendChild(card);
   });
+
   if (hasMore) {
     const more = document.createElement('div');
     more.style.cssText = 'text-align:center;padding:16px';
     more.innerHTML = `<button onclick="loadMore()" style="padding:9px 28px;border-radius:20px;border:1.5px solid #2980b9;background:#fff;color:#2980b9;font-size:0.88rem;cursor:pointer;font-weight:600;">더 보기 (${filtered.length - end}개 남음)</button>`;
     fragment.appendChild(more);
   }
+
   main.innerHTML = '';
   main.appendChild(fragment);
 }
@@ -679,15 +731,10 @@ render();
 
 
 // ===================== 고시 이력 탭 =====================
-let gCurrentType = '';
-let gCurrentCat = '';
-let gCurrentYear = '';
-let gCurrentQuery = '';
-let gCurrentPage = 0;
+let gCurrentType = '', gCurrentCat = '', gCurrentYear = '', gCurrentQuery = '', gCurrentPage = 0;
 const G_PAGE_SIZE = 50;
 
 function buildGosisiSidebar() {
-  // 분류 목록
   const gcats = [...new Set(GOSISI_DATA.map(d => d.cat).filter(Boolean))].sort();
   const gcatList = document.getElementById('gcatFilterList');
   gcats.forEach(cat => {
@@ -695,11 +742,9 @@ function buildGosisiSidebar() {
     btn.className = 'side-btn g-side-btn';
     btn.dataset.gcat = cat;
     btn.textContent = cat;
-    btn.onclick = () => selectGCat(cat);
+    btn.onclick = () => { gCurrentCat = cat; gCurrentPage = 0; document.querySelectorAll('[data-gcat]').forEach(b => b.classList.toggle('active', b.dataset.gcat === cat)); renderGosisi(); };
     gcatList.appendChild(btn);
   });
-
-  // 연도 목록
   const years = [...new Set(GOSISI_DATA.map(d => d.date.slice(0, 4)))].sort((a, b) => b - a);
   const yearList = document.getElementById('yearFilterList');
   years.forEach(yr => {
@@ -707,25 +752,9 @@ function buildGosisiSidebar() {
     btn.className = 'side-btn g-side-btn';
     btn.dataset.year = yr;
     btn.textContent = yr + '년';
-    btn.onclick = () => selectGYear(yr);
+    btn.onclick = () => { gCurrentYear = yr; gCurrentPage = 0; document.querySelectorAll('[data-year]').forEach(b => b.classList.toggle('active', b.dataset.year === yr)); renderGosisi(); };
     yearList.appendChild(btn);
   });
-}
-
-function selectGType(type) {
-  gCurrentType = type; gCurrentPage = 0;
-  document.querySelectorAll('[data-type]').forEach(b => b.classList.toggle('active', b.dataset.type === type));
-  renderGosisi();
-}
-function selectGCat(cat) {
-  gCurrentCat = cat; gCurrentPage = 0;
-  document.querySelectorAll('[data-gcat]').forEach(b => b.classList.toggle('active', b.dataset.gcat === cat));
-  renderGosisi();
-}
-function selectGYear(yr) {
-  gCurrentYear = yr; gCurrentPage = 0;
-  document.querySelectorAll('[data-year]').forEach(b => b.classList.toggle('active', b.dataset.year === yr));
-  renderGosisi();
 }
 
 function getGFiltered() {
@@ -735,20 +764,8 @@ function getGFiltered() {
     if (gCurrentCat && d.cat !== gCurrentCat) return false;
     if (gCurrentYear && !d.date.startsWith(gCurrentYear)) return false;
     if (!q) return true;
-    return (
-      d.no.toLowerCase().includes(q) ||
-      d.name.toLowerCase().includes(q) ||
-      d.code.toLowerCase().includes(q) ||
-      d.detail.toLowerCase().includes(q) ||
-      d.cat.toLowerCase().includes(q)
-    );
-  }).reverse(); // 최신 순
-}
-
-function highlightG(text, q) {
-  if (!q || !text) return text || '';
-  const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return text.replace(new RegExp(esc, 'gi'), m => `<mark>${m}</mark>`);
+    return d.no.toLowerCase().includes(q) || d.name.toLowerCase().includes(q) || d.code.toLowerCase().includes(q) || d.detail.toLowerCase().includes(q) || d.cat.toLowerCase().includes(q);
+  }).reverse();
 }
 
 function renderGosisi() {
@@ -756,73 +773,54 @@ function renderGosisi() {
   const q = gCurrentQuery.trim().toLowerCase();
   const stats = document.getElementById('gosisiStats');
   const main = document.getElementById('gosisiMain');
-
   let statText = `고시 <strong>${filtered.length.toLocaleString()}</strong>건`;
   if (gCurrentType) statText += ` · <strong>${gCurrentType}</strong>`;
   if (gCurrentCat) statText += ` · <strong>${gCurrentCat}</strong>`;
   if (gCurrentYear) statText += ` · <strong>${gCurrentYear}년</strong>`;
   if (q) statText += ` · "<strong>${q}</strong>"`;
   stats.innerHTML = statText;
-
-  if (filtered.length === 0) {
-    main.innerHTML = `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`;
-    return;
-  }
+  if (filtered.length === 0) { main.innerHTML = `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`; return; }
 
   const end = (gCurrentPage + 1) * G_PAGE_SIZE;
   const pageItems = filtered.slice(0, end);
   const hasMore = filtered.length > end;
-
-  // 연도별 그룹핑
   const yearGroups = {};
-  pageItems.forEach(d => {
-    const yr = d.date.slice(0, 4);
-    if (!yearGroups[yr]) yearGroups[yr] = [];
-    yearGroups[yr].push(d);
-  });
+  pageItems.forEach(d => { const yr = d.date.slice(0, 4); if (!yearGroups[yr]) yearGroups[yr] = []; yearGroups[yr].push(d); });
 
   let html = '';
   Object.keys(yearGroups).sort((a, b) => b - a).forEach(yr => {
     html += `<div class="year-group-header">📅 ${yr}년 <span class="year-count">${yearGroups[yr].length}건</span></div>`;
-    yearGroups[yr].forEach((d, idx) => {
+    yearGroups[yr].forEach(d => {
       const typeClass = d.type || '';
-      const codeHtml = d.code ? `<span class="gosisi-code">${highlightG(d.code, q)}</span>` : '';
-      html += `
-        <div class="gosisi-card type-${typeClass}" onclick="this.classList.toggle('open')">
-          <div class="gosisi-card-header">
-            <span class="gosisi-no">${highlightG(d.no, q)}</span>
-            <div class="gosisi-meta">
-              <span class="gosisi-name">${highlightG(d.name, q)}</span>
-              <div class="gosisi-sub">
-                <span class="gosisi-date">시행 ${d.date}</span>
-                <span class="gosisi-cat-badge">${highlightG(d.cat, q)}</span>
-                <span class="type-badge ${typeClass}">${typeClass}</span>
-                ${codeHtml}
-              </div>
+      const codeHtml = d.code ? `<span class="gosisi-code">${highlight(d.code, q)}</span>` : '';
+      html += `<div class="gosisi-card type-${typeClass}" onclick="this.classList.toggle('open')">
+        <div class="gosisi-card-header">
+          <span class="gosisi-no">${highlight(d.no, q)}</span>
+          <div class="gosisi-meta">
+            <span class="gosisi-name">${highlight(d.name, q)}</span>
+            <div class="gosisi-sub">
+              <span class="gosisi-date">시행 ${d.date}</span>
+              <span class="gosisi-cat-badge">${highlight(d.cat, q)}</span>
+              <span class="type-badge ${typeClass}">${typeClass}</span>
+              ${codeHtml}
             </div>
-            <span class="gosisi-chevron">▼</span>
           </div>
-          <div class="gosisi-detail"><strong>세부내용:</strong> ${highlightG(d.detail, q)}</div>
-        </div>`;
+          <span class="gosisi-chevron">▼</span>
+        </div>
+        <div class="gosisi-detail"><strong>세부내용:</strong> ${highlight(d.detail, q)}</div>
+      </div>`;
     });
   });
-
-  if (hasMore) {
-    html += `<div style="text-align:center;padding:16px"><button onclick="loadMoreGosisi()" style="padding:9px 28px;border-radius:20px;border:1.5px solid #2980b9;background:#fff;color:#2980b9;font-size:0.88rem;cursor:pointer;font-weight:600;">더 보기 (${filtered.length - end}건 남음)</button></div>`;
-  }
-
+  if (hasMore) html += `<div style="text-align:center;padding:16px"><button onclick="loadMoreGosisi()" style="padding:9px 28px;border-radius:20px;border:1.5px solid #2980b9;background:#fff;color:#2980b9;font-size:0.88rem;cursor:pointer;font-weight:600;">더 보기 (${filtered.length - end}건 남음)</button></div>`;
   main.innerHTML = html;
 }
-
 function loadMoreGosisi() { gCurrentPage++; renderGosisi(); }
 
-// 이벤트 연결
 document.querySelectorAll('[data-type]').forEach(btn => {
-  btn.addEventListener('click', () => selectGType(btn.dataset.type));
+  btn.addEventListener('click', () => { gCurrentType = btn.dataset.type; gCurrentPage = 0; document.querySelectorAll('[data-type]').forEach(b => b.classList.toggle('active', b.dataset.type === btn.dataset.type)); renderGosisi(); });
 });
 document.querySelector('[data-gcat=""]').addEventListener('click', () => { gCurrentCat = ''; gCurrentPage = 0; document.querySelectorAll('[data-gcat]').forEach(b => b.classList.toggle('active', b.dataset.gcat === '')); renderGosisi(); });
 document.querySelector('[data-year=""]').addEventListener('click', () => { gCurrentYear = ''; gCurrentPage = 0; document.querySelectorAll('[data-year]').forEach(b => b.classList.toggle('active', b.dataset.year === '')); renderGosisi(); });
-
 let gosisiSearchTimer;
 document.getElementById('gosisiSearch').addEventListener('input', e => {
   clearTimeout(gosisiSearchTimer);
