@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>검체검사 보험 수가 조회</title>
+<style>
+:root {
+  --bg: #f0f4f8;
+  --surface: #ffffff;
+  --primary: #1a5276;
+  --accent: #2980b9;
+  --accent2: #1abc9c;
+  --border: #d5e0ec;
+  --text: #1c2833;
+  --muted: #6c7a89;
+  --tag1: #eaf4fb;
+  --tag1b: #2980b9;
+  --tag2: #eafaf1;
+  --tag2b: #1e8449;
+  --shadow: 0 2px 8px rgba(26,82,118,0.10);
+  --fav: #f39c12;
+  --note: #fff8e1;
+  --noteb: #e67e22;
+  --sidebar-w: 220px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+header {
+  background: var(--primary); color: #fff;
+  padding: 14px 20px; position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 2px 12px rgba(26,82,118,0.25);
+  display: flex; align-items: center; gap: 12px;
+}
+header h1 { font-size: 1rem; font-weight: 700; white-space: nowrap; }
+header h1 span { font-size: 0.72rem; font-weight: 400; opacity: 0.65; margin-left: 6px; }
+.search-row { display: flex; gap: 8px; flex: 1; }
+#searchInput {
+  flex: 1; padding: 8px 14px; border-radius: 8px; border: none;
+  font-size: 0.9rem; background: rgba(255,255,255,0.15); color: #fff; outline: none;
+}
+#searchInput::placeholder { color: rgba(255,255,255,0.5); }
+#searchInput:focus { background: rgba(255,255,255,0.25); }
+.hdr-btn {
+  padding: 8px 12px; border-radius: 8px; border: none;
+  background: rgba(255,255,255,0.15); color: #fff; cursor: pointer;
+  font-size: 0.8rem; white-space: nowrap; transition: background 0.2s;
+}
+.hdr-btn:hover { background: rgba(255,255,255,0.25); }
+#favToggleBtn.active { background: var(--fav); }
+
+/* TAB NAV */
+.tab-nav {
+  background: var(--primary);
+  border-top: 1px solid rgba(255,255,255,0.15);
+  display: flex; padding: 0 20px;
+  position: sticky; top: 54px; z-index: 190;
+}
+.tab-btn {
+  padding: 9px 20px; border: none; background: none; color: rgba(255,255,255,0.6);
+  cursor: pointer; font-size: 0.85rem; font-weight: 600; border-bottom: 3px solid transparent;
+  transition: all 0.15s; white-space: nowrap;
+}
+.tab-btn:hover { color: #fff; }
+.tab-btn.active { color: #fff; border-bottom-color: var(--accent2); }
+
+.tab-page { display: none; }
+.tab-page.active { display: flex; flex: 1; }
+.body-wrap { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  position: sticky; top: 90px; height: calc(100vh - 90px);
+  overflow-y: auto; display: flex; flex-direction: column;
+}
+.sidebar-section { border-bottom: 1px solid var(--border); padding: 10px 0; }
+.sidebar-label {
+  font-size: 0.68rem; font-weight: 700; color: var(--muted);
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 4px 14px 6px; display: block;
+}
+.side-btn {
+  display: block; width: 100%; text-align: left;
+  padding: 7px 14px; border: none; background: none; cursor: pointer;
+  font-size: 0.8rem; color: var(--text); transition: background 0.12s;
+  border-left: 3px solid transparent; line-height: 1.3;
+}
+.side-btn:hover { background: var(--tag1); }
+.side-btn.active { background: var(--tag1); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+.content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.stats-bar {
+  padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
+  font-size: 0.78rem; color: var(--muted); position: sticky; top: 90px; z-index: 100;
+}
+.stats-bar strong { color: var(--primary); }
+main { padding: 14px 16px 60px; }
+
+.group-card {
+  background: var(--surface); border-radius: 10px; margin-bottom: 10px;
+  box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden;
+  transition: border-color 0.2s;
+}
+.group-card.favorited { border-color: var(--fav); }
+.group-header {
+  display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+  cursor: pointer; user-select: none; transition: background 0.12s;
+}
+.group-header:hover { background: #f7fafc; }
+.group-code {
+  font-size: 0.76rem; font-weight: 700; color: var(--primary);
+  background: var(--tag1); border: 1px solid var(--border);
+  padding: 2px 7px; border-radius: 4px; white-space: nowrap; font-family: monospace;
+}
+.group-name { flex: 1; font-size: 0.92rem; font-weight: 600; }
+.group-cat { font-size: 0.7rem; color: var(--accent); background: var(--tag1); padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+.group-count { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+.chevron { color: var(--muted); font-size: 0.75rem; transition: transform 0.2s; }
+.group-card.open .chevron { transform: rotate(180deg); }
+.fav-btn {
+  background: none; border: none; cursor: pointer; font-size: 1rem;
+  padding: 2px 3px; line-height: 1; opacity: 0.3; transition: opacity 0.15s, transform 0.15s; flex-shrink: 0;
+}
+.fav-btn:hover { opacity: 0.7; transform: scale(1.2); }
+.fav-btn.on { opacity: 1; }
+.items-table { display: none; border-top: 1px solid var(--border); overflow-x: auto; }
+.group-card.open .items-table { display: block; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+thead tr { background: #f0f4f8; }
+th { padding: 7px 9px; text-align: left; font-weight: 600; color: var(--muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
+td { padding: 7px 9px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f7fafc; }
+.code-cell { font-family: monospace; font-size: 0.76rem; color: var(--primary); font-weight: 600; }
+.price-cell { text-align: right; }
+.price-val { font-weight: 600; }
+.price-unit { font-size: 0.68rem; color: var(--muted); }
+.rv-cell { text-align: right; color: var(--accent); font-weight: 500; }
+.section-badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
+.s1 { background: var(--tag1); color: var(--tag1b); }
+.s2 { background: var(--tag2); color: var(--tag2b); }
+
+/* ── 주석 스타일 ── */
+.note-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--noteb); color: #fff; font-size: 0.65rem; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; transition: transform 0.15s;
+  position: relative;
+}
+.note-icon:hover { transform: scale(1.15); }
+
+/* 툴팁 방식 */
+.note-tooltip {
+  position: absolute; left: 24px; top: 50%; transform: translateY(-50%);
+  background: #2c3e50; color: #fff; padding: 8px 12px; border-radius: 8px;
+  font-size: 0.75rem; line-height: 1.5; white-space: normal; width: 320px; max-width: 80vw;
+  z-index: 500; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  pointer-events: none;
+}
+.note-icon:hover .note-tooltip,
+.note-icon:focus .note-tooltip { display: block; }
+
+/* 인라인 주석 행 */
+.note-row td {
+  background: var(--note);
+  font-size: 0.76rem;
+  color: #7d4e00;
+  padding: 5px 9px 5px 36px;
+  border-left: 3px solid var(--noteb);
+  line-height: 1.5;
+}
+.note-row-content { display: flex; align-items: flex-start; gap: 6px; }
+.note-row-icon { font-size: 0.8rem; flex-shrink: 0; margin-top: 1px; }
+
+/* 주 배지 (헤더에 표시) */
+.note-badge {
+  font-size: 0.62rem; font-weight: 700; padding: 1px 5px; border-radius: 10px;
+  background: var(--noteb); color: #fff; white-space: nowrap;
+}
+
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty .icon { font-size: 3rem; margin-bottom: 12px; }
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: #2c3e50; color: #fff; padding: 10px 20px; border-radius: 20px;
+  font-size: 0.83rem; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+mark { background: #fff3cd; border-radius: 2px; padding: 0 1px; }
+.br-group-label {
+  font-size: 0.68rem; font-weight: 700; color: var(--primary);
+  padding: 6px 14px 3px; opacity: 0.7; letter-spacing: 0.3px;
+  border-top: 1px solid var(--border); margin-top: 2px;
+}
+.br-group-label:first-child { border-top: none; margin-top: 0; }
+.side-big { font-weight: 700; color: var(--primary); font-size: 0.82rem; background: #f7fafc; }
+.side-big.active { background: var(--tag1); border-left-color: var(--accent); }
+.sub-wrap { display: none; }
+.sub-wrap.open { display: block; }
+.side-sub { padding-left: 22px; font-size: 0.77rem; color: var(--muted); }
+.side-sub:hover { color: var(--text); }
+.side-sub.active { color: var(--accent); font-weight: 600; background: var(--tag1); border-left-color: var(--accent); }
+
+/* ===== 고시 이력 탭 ===== */
+#tab-gosisi { flex-direction: column; }
+.gosisi-wrap { display: flex; flex: 1; min-height: 0; }
+.gosisi-sidebar {
+  width: 200px; flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  position: sticky; top: 90px; height: calc(100vh - 90px);
+  overflow-y: auto;
+}
+.gosisi-sidebar .sidebar-section { border-bottom: 1px solid var(--border); padding: 10px 0; }
+.gosisi-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gosisi-search-bar {
+  padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 90px; z-index: 100;
+  display: flex; gap: 8px; align-items: center;
+}
+#gosisiSearch {
+  flex: 1; padding: 8px 12px; border-radius: 8px;
+  border: 1.5px solid var(--border); font-size: 0.88rem; outline: none;
+}
+#gosisiSearch:focus { border-color: var(--accent); }
+.gosisi-stats {
+  padding: 6px 14px; font-size: 0.75rem; color: var(--muted);
+  background: #f7fafc; border-bottom: 1px solid var(--border);
+}
+.gosisi-stats strong { color: var(--primary); }
+.gosisi-main { padding: 12px 14px 60px; }
+.gosisi-card {
+  background: var(--surface); border-radius: 10px; margin-bottom: 8px;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+  border-left: 4px solid var(--border); overflow: hidden;
+}
+.gosisi-card.type-신설 { border-left-color: #27ae60; }
+.gosisi-card.type-변경 { border-left-color: #2980b9; }
+.gosisi-card.type-삭제 { border-left-color: #e74c3c; }
+.gosisi-card.type-비급여전환 { border-left-color: #e67e22; }
+.gosisi-card.type-신의료기술 { border-left-color: #8e44ad; }
+.gosisi-card-header {
+  display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
+  cursor: pointer; user-select: none;
+}
+.gosisi-card-header:hover { background: #f7fafc; }
+.gosisi-no {
+  font-size: 0.72rem; font-weight: 700; color: var(--primary);
+  background: var(--tag1); border: 1px solid var(--border);
+  padding: 2px 7px; border-radius: 4px; white-space: nowrap; font-family: monospace; flex-shrink: 0;
+}
+.gosisi-meta { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.gosisi-name { font-size: 0.88rem; font-weight: 600; line-height: 1.4; }
+.gosisi-sub { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.gosisi-date { font-size: 0.7rem; color: var(--muted); }
+.gosisi-cat-badge { font-size: 0.68rem; padding: 1px 6px; border-radius: 10px; font-weight: 600; background: #f0f4f8; color: var(--muted); }
+.type-badge { font-size: 0.68rem; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
+.type-badge.신설 { background: #eafaf1; color: #1e8449; }
+.type-badge.변경 { background: #eaf4fb; color: #1a5276; }
+.type-badge.삭제 { background: #fdf2f2; color: #c0392b; }
+.type-badge.비급여전환 { background: #fef9e7; color: #9c6c00; }
+.type-badge.신의료기술 { background: #f5eef8; color: #6c3483; }
+.gosisi-code { font-size: 0.7rem; color: var(--accent); font-family: monospace; }
+.gosisi-chevron { color: var(--muted); font-size: 0.72rem; flex-shrink: 0; transition: transform 0.2s; padding-top: 2px; }
+.gosisi-card.open .gosisi-chevron { transform: rotate(180deg); }
+.gosisi-detail {
+  display: none; border-top: 1px solid var(--border);
+  padding: 10px 14px; font-size: 0.82rem; color: var(--muted);
+  background: #f9fbfd; line-height: 1.6;
+}
+.gosisi-card.open .gosisi-detail { display: block; }
+.gosisi-detail strong { color: var(--text); }
+.year-group-header {
+  font-size: 0.78rem; font-weight: 700; color: var(--primary);
+  padding: 6px 4px 4px; margin-top: 8px; margin-bottom: 4px;
+  border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 6px;
+}
+.year-group-header:first-child { margin-top: 0; }
+.year-count { font-weight: 400; color: var(--muted); font-size: 0.72rem; }
+
+@media (max-width: 700px) {
+  .sidebar, .gosisi-sidebar { display: none; }
+  header h1 span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>검체검사 보험 수가 조회 <span>장구분 02 · 절구분 01/02</span></h1>
+  <div class="search-row" id="headerSearchRow">
+    <input id="searchInput" type="search" placeholder="검사명 또는 수가코드 검색..." autocomplete="off">
+    <button class="hdr-btn" id="favToggleBtn">⭐ 즐겨찾기</button>
+    <button class="hdr-btn" id="clearBtn">초기화</button>
+  </div>
+</header>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="tab-sugas">📋 수가 조회</button>
+  <button class="tab-btn" data-tab="tab-gosisi">📜 고시 이력</button>
+</div>
+
+<div class="body-wrap">
+
+  <!-- ===== 탭1: 수가 조회 ===== -->
+  <div id="tab-sugas" class="tab-page active">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <span class="sidebar-label">절구분</span>
+        <div id="sectionList">
+          <button class="side-btn sec-btn active" data-sec="">전체</button>
+          <button class="side-btn sec-btn" data-sec="절1">절1</button>
+          <button class="side-btn sec-btn" data-sec="절2">절2</button>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <span class="sidebar-label">세분류</span>
+        <div id="catList">
+          <button class="side-btn active" data-cat="">전체</button>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <span class="sidebar-label">[ ] 검사방법</span>
+        <div id="bracketList">
+          <button class="side-btn b-btn active" data-bracket="">전체</button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="content">
+      <div class="stats-bar" id="statsBar">불러오는 중...</div>
+      <main id="main"></main>
+    </div>
+  </div>
+
+  <!-- ===== 탭2: 고시 이력 ===== -->
+  <div id="tab-gosisi" class="tab-page">
+    <div class="gosisi-wrap">
+      <aside class="gosisi-sidebar">
+        <div class="sidebar-section">
+          <span class="sidebar-label">변경 유형</span>
+          <div id="typeFilterList">
+            <button class="side-btn g-side-btn active" data-type="">전체</button>
+            <button class="side-btn g-side-btn" data-type="신설">🟢 신설</button>
+            <button class="side-btn g-side-btn" data-type="변경">🔵 변경</button>
+            <button class="side-btn g-side-btn" data-type="삭제">🔴 삭제</button>
+            <button class="side-btn g-side-btn" data-type="비급여전환">🟠 비급여전환</button>
+            <button class="side-btn g-side-btn" data-type="신의료기술">🟣 신의료기술</button>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <span class="sidebar-label">검사 분류</span>
+          <div id="gcatFilterList">
+            <button class="side-btn g-side-btn active" data-gcat="">전체</button>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <span class="sidebar-label">연도</span>
+          <div id="yearFilterList">
+            <button class="side-btn g-side-btn active" data-year="">전체</button>
+          </div>
+        </div>
+      </aside>
+      <div class="gosisi-content">
+        <div class="gosisi-search-bar">
+          <input id="gosisiSearch" type="search" placeholder="고시번호, 검사명, 코드 검색..." autocomplete="off">
+        </div>
+        <div class="gosisi-stats" id="gosisiStats"></div>
+        <div class="gosisi-main" id="gosisiMain"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="LAB_DATA.js"></script>
+<script src="LAB_NOTES.js"></script>
+<script src="GOSISI_DATA.js"></script>
+<script>
+// ===================== 탭 전환 =====================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    document.getElementById('headerSearchRow').style.display =
+      btn.dataset.tab === 'tab-gosisi' ? 'none' : '';
+  });
+});
+
+// ===================== 유틸 =====================
+function fmt(n) { if (n == null) return '-'; return n.toLocaleString('ko-KR'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+function highlight(text, q) {
+  if (!q || !text) return text || '';
+  const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(text).replace(new RegExp(esc, 'gi'), m => `<mark>${m}</mark>`);
+}
+
+// ===================== 즐겨찾기 =====================
+let favorites = new Set(JSON.parse(localStorage.getItem('lab_favs') || '[]'));
+function saveFavs() { localStorage.setItem('lab_favs', JSON.stringify([...favorites])); }
+function toggleFav(groupCode, event) {
+  event.stopPropagation();
+  if (favorites.has(groupCode)) { favorites.delete(groupCode); showToast('즐겨찾기에서 제거했습니다'); }
+  else { favorites.add(groupCode); showToast('⭐ 즐겨찾기에 추가했습니다'); }
+  saveFavs();
+  const card = document.querySelector(`.group-card[data-group="${groupCode}"]`);
+  if (card) {
+    const btn = card.querySelector('.fav-btn');
+    const isFav = favorites.has(groupCode);
+    btn.textContent = isFav ? '⭐' : '☆';
+    btn.classList.toggle('on', isFav);
+    card.classList.toggle('favorited', isFav);
+  }
+  if (showFavOnly) render();
+  updateFavBtn();
+}
+function updateFavBtn() {
+  const btn = document.getElementById('favToggleBtn');
+  btn.classList.toggle('active', showFavOnly);
+  btn.textContent = showFavOnly ? '⭐ 즐겨찾기 보는중' : `⭐ 즐겨찾기${favorites.size > 0 ? ' ('+favorites.size+')' : ''}`;
+}
+
+// ===================== 수가 조회 상태 =====================
+let currentCat = '', currentBracket = '', currentSection = '';
+let currentQuery = '', showFavOnly = false, currentPage = 0;
+const PAGE_SIZE = 40;
+
+const EXCLUDE_BRACKETS = new Set(['1장기당','bDNA유전자신호증폭법','훼리틴','IGH/IGK gene 동시','IGH gene','UreaseTest','색조, 비중, 세포수, 세포감별계산, 산도','STR Markers','DNA Microarray법','bDNA유전자신호증폭측정법','양측정, 색조검사, 현미경관찰, 산측정, 유산, 잠혈반응, 펩신등','D4Z4 Repeat','IgG','NPN포함','알파지중해빈혈','정성그룹2']);
+
+function buildSidebar() {
+  const cats = [...new Set(LAB_DATA.map(d => d.cat).filter(Boolean))].sort();
+  const catList = document.getElementById('catList');
+  const bigMap = {};
+  cats.forEach(cat => { const big = cat.split('-')[0]; if (!bigMap[big]) bigMap[big] = []; bigMap[big].push(cat); });
+  Object.keys(bigMap).sort().forEach(big => {
+    const subs = bigMap[big];
+    const bigBtn = document.createElement('button');
+    bigBtn.className = 'side-btn side-big';
+    bigBtn.dataset.cat = '__big__' + big;
+    bigBtn.textContent = '▸ ' + big;
+    bigBtn.onclick = () => selectBigCat(big, bigBtn);
+    catList.appendChild(bigBtn);
+    const subWrap = document.createElement('div');
+    subWrap.className = 'sub-wrap';
+    subWrap.dataset.big = big;
+    subs.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'side-btn side-sub';
+      btn.dataset.cat = cat;
+      btn.textContent = cat.includes('-') ? cat.split('-').slice(1).join('-') : cat;
+      btn.title = cat;
+      btn.onclick = () => selectCat(cat);
+      subWrap.appendChild(btn);
+    });
+    catList.appendChild(subWrap);
+  });
+
+  const re = /\[([^\]]+)\]/;
+  const brList = document.getElementById('bracketList');
+  const BR_GROUPS = [
+    { label: '핵산증폭', items: [{ key: '핵산증폭', label: '핵산증폭 (전체)' }]},
+    { label: '중합효소연쇄반응', items: [
+      { key: '중합효소연쇄반응법', label: 'PCR법' },
+      { key: '실시간중합효소연쇄반응법', label: '실시간 PCR' },
+      { key: '이중중합효소연쇄반응법', label: '이중 PCR' },
+      { key: '실시간역전사중합효소연쇄반응법', label: '실시간 RT-PCR' },
+      { key: '역전사중합효소연쇄반응법', label: 'RT-PCR' },
+      { key: '역전사 이중중합효소연쇄반응법', label: '역전사 이중 PCR' },
+      { key: '중합효소연쇄반응교잡반응법', label: 'PCR 교잡' },
+    ]},
+    { label: '정밀면역검사', items: [
+      { key: '정밀면역검사', label: '정밀면역검사' },
+      { key: '정밀면역검사(정량)', label: '정량' },
+      { key: '정밀면역검사(정량)-간이검사', label: '정량-간이' },
+    ]},
+    { label: '일반면역검사', items: [
+      { key: '일반면역검사', label: '일반면역검사' },
+      { key: '일반면역검사(간이검사)', label: '간이검사' },
+    ]},
+    { label: '정밀분광/질량분석', items: [
+      { key: '정밀분광-질량분석(정량)', label: '질량분석(정량)' },
+      { key: '정밀분광-질량분석', label: '질량분석' },
+    ]},
+    { label: '염기서열', items: [
+      { key: '염기서열검사', label: '염기서열검사' },
+      { key: '염기서열분석', label: '염기서열분석' },
+    ]},
+    { label: '화학반응', items: [
+      { key: '화학반응-장비측정', label: '장비측정' },
+      { key: '화학반응-장비측정(간이검사)', label: '장비측정(간이)' },
+      { key: '화학반응-육안검사', label: '육안검사' },
+    ]},
+    { label: '기타', items: [
+      { key: '분획분석', label: '분획분석' },
+      { key: '유세포분석법', label: '유세포분석법' },
+      { key: '웨스턴블롯', label: '웨스턴블롯' },
+      { key: '종목당', label: '종목당' },
+      { key: '간이검사', label: '간이검사' },
+    ]},
+  ];
+  BR_GROUPS.forEach(group => {
+    const label = document.createElement('div');
+    label.className = 'br-group-label';
+    label.textContent = group.label;
+    brList.appendChild(label);
+    group.items.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'side-btn b-btn';
+      btn.dataset.bracket = item.key;
+      btn.textContent = item.label;
+      btn.onclick = () => selectBracket(item.key);
+      brList.appendChild(btn);
+    });
+  });
+}
+
+function selectSection(sec) {
+  currentSection = sec; currentPage = 0;
+  document.querySelectorAll('.sec-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
+  render();
+}
+function selectBigCat(big, bigBtn) {
+  const subWrap = document.querySelector('.sub-wrap[data-big="' + big + '"]');
+  const isOpen = subWrap.classList.contains('open');
+  document.querySelectorAll('.sub-wrap').forEach(w => w.classList.remove('open'));
+  document.querySelectorAll('.side-big').forEach(b => { b.classList.remove('active'); b.textContent = '▸ ' + b.dataset.cat.replace('__big__',''); });
+  if (!isOpen) { subWrap.classList.add('open'); bigBtn.classList.add('active'); bigBtn.textContent = '▾ ' + big; }
+  currentCat = isOpen ? '' : '__big__' + big;
+  currentBracket = ''; currentPage = 0;
+  document.querySelectorAll('#catList .side-sub').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
+  currentSection = ''; document.querySelectorAll('.sec-btn').forEach(b => b.classList.toggle('active', b.dataset.sec === ''));
+  render();
+}
+function selectCat(cat) {
+  currentCat = cat; currentBracket = ''; currentPage = 0;
+  document.querySelectorAll('#catList .side-sub').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
+  render();
+}
+function selectBracket(br) {
+  currentBracket = br; currentPage = 0;
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === br));
+  render();
+}
+
+function getFiltered() {
+  const q = currentQuery.trim().toLowerCase();
+  const brRe = /\[([^\]]+)\]/;
+  return LAB_DATA.filter(g => {
+    const groupCode = g.i[0]?.c?.slice(0, 5) || '';
+    if (showFavOnly && !favorites.has(groupCode)) return false;
+    if (currentCat) {
+      if (currentCat.startsWith('__big__')) { const big = currentCat.replace('__big__', ''); if (!g.cat || !g.cat.startsWith(big)) return false; }
+      else { if (g.cat !== currentCat) return false; }
+    }
+    if (currentBracket) {
+      if (currentBracket === '핵산증폭') { if (!g.n.includes('핵산증폭')) return false; }
+      else { const m = brRe.exec(g.n); if (!m || m[1] !== currentBracket) return false; }
+    }
+    if (currentSection && !g.i.some(it => it.s === currentSection)) return false;
+    if (!q) return true;
+    if (g.n.toLowerCase().includes(q)) return true;
+    if (groupCode.toLowerCase().includes(q)) return true;
+    return false;
+  });
+}
+
+// 주석 관련 유틸
+function getNotes(code) {
+  if (!window.LAB_NOTES) return [];
+  // 정확히 일치하는 경우
+  if (LAB_NOTES[code]) return LAB_NOTES[code];
+  // 앞에서부터 5자리씩 줄여가며 접두사 매칭 (D6611000Z → D6611 등)
+  for (let len = code.length - 1; len >= 4; len--) {
+    const prefix = code.slice(0, len);
+    if (LAB_NOTES[prefix]) return LAB_NOTES[prefix];
+  }
+  return [];
+}
+
+function buildNoteHTML(notes) {
+  if (!notes || notes.length === 0) return '';
+  const escaped = notes.map(n =>
+    n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  );
+  return escaped.map(n => `
+    <tr class="note-row">
+      <td colspan="8">
+        <div class="note-row-content">
+          <span class="note-row-icon">📌</span>
+          <span>${n}</span>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function render() {
+  const filtered = getFiltered();
+  const q = currentQuery.trim().toLowerCase();
+  const main = document.getElementById('main');
+  const stats = document.getElementById('statsBar');
+  const totalItems = filtered.reduce((s, g) => s + g.i.length, 0);
+  let statText = `검사그룹 <strong>${filtered.length.toLocaleString()}</strong>개 · 수가코드 <strong>${totalItems.toLocaleString()}</strong>개`;
+  if (currentCat) statText += ` · <strong>${currentCat}</strong>`;
+  if (currentBracket) statText += ` · [<strong>${currentBracket}</strong>]`;
+  if (showFavOnly) statText += ` · ⭐ 즐겨찾기`;
+  if (q) statText += ` · "<strong>${q}</strong>"`;
+  stats.innerHTML = statText;
+
+  if (filtered.length === 0) {
+    main.innerHTML = showFavOnly
+      ? `<div class="empty"><div class="icon">⭐</div><p>즐겨찾기한 항목이 없습니다<br><small>각 검사 항목의 ☆ 버튼을 눌러 추가하세요</small></p></div>`
+      : `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`;
+    return;
+  }
+
+  const end = (currentPage + 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(0, end);
+  const hasMore = filtered.length > end;
+  const fragment = document.createDocumentFragment();
+
+  pageItems.forEach(g => {
+    const card = document.createElement('div');
+    const groupCode = g.i[0]?.c?.slice(0, 5) || '';
+    const isFav = favorites.has(groupCode);
+    const isSingle = g.i.length === 1;
+
+    // 그룹 내 주석 있는 코드 수 확인
+    const noteCount = g.i.filter(it => getNotes(it.c).length > 0).length;
+
+    card.className = 'group-card' + (isFav ? ' favorited' : '');
+    card.dataset.group = groupCode;
+
+    // 테이블 행 생성
+    const rowsHTML = g.i.map(it => {
+      const notes = getNotes(it.c);
+      const noteRow = buildNoteHTML(notes);
+      const hasNote = notes.length > 0;
+      return `<tr>
+        <td class="code-cell">
+          <span style="display:flex;align-items:center;gap:5px">
+            ${highlight(it.c, q)}
+            ${hasNote ? `<span class="note-badge">주</span>` : ''}
+          </span>
+        </td>
+        <td>${highlight(it.n, q)}</td>
+        <td style="color:#6c7a89;font-size:0.76rem">${it.cl || '-'}</td>
+        <td class="price-cell">${it.p1 != null ? `<span class="price-val">${fmt(it.p1)}</span><span class="price-unit">원</span>` : '-'}</td>
+        <td class="price-cell">${it.p2 != null ? `<span class="price-val">${fmt(it.p2)}</span><span class="price-unit">원</span>` : '-'}</td>
+        <td class="rv-cell">${it.rv != null ? it.rv.toFixed(2) : '-'}</td>
+        <td><span class="section-badge ${it.s === '절1' ? 's1' : 's2'}">${it.s}</span></td>
+        <td style="font-size:0.73rem;color:#6c7a89">${it.d}</td>
+      </tr>${noteRow}`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="group-header" onclick="toggleCard(this)">
+        <button class="fav-btn ${isFav ? 'on' : ''}" onclick="toggleFav('${groupCode}', event)" title="즐겨찾기">${isFav ? '⭐' : '☆'}</button>
+        <span class="group-code">${highlight(groupCode, q)}</span>
+        <span class="group-name">${highlight(g.n, q)}</span>
+        ${g.cat ? `<span class="group-cat">${g.cat}</span>` : ''}
+        ${!isSingle ? `<span class="group-count">${g.i.length}개</span>` : ''}
+        ${noteCount > 0 ? `<span class="note-badge">주 ${noteCount}</span>` : ''}
+        <span class="chevron">▼</span>
+      </div>
+      <div class="items-table">
+        <table>
+          <thead><tr>
+            <th>수가코드</th><th>검사명</th><th>분류번호</th>
+            <th>의원단가</th><th>병원급단가</th><th>상대가치</th><th>절구분</th><th>적용일자</th>
+          </tr></thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      </div>`;
+
+    if (isSingle) card.classList.add('open');
+    fragment.appendChild(card);
+  });
+
+  if (hasMore) {
+    const more = document.createElement('div');
+    more.style.cssText = 'text-align:center;padding:16px';
+    more.innerHTML = `<button onclick="loadMore()" style="padding:9px 28px;border-radius:20px;border:1.5px solid #2980b9;background:#fff;color:#2980b9;font-size:0.88rem;cursor:pointer;font-weight:600;">더 보기 (${filtered.length - end}개 남음)</button>`;
+    fragment.appendChild(more);
+  }
+
+  main.innerHTML = '';
+  main.appendChild(fragment);
+}
+
+function loadMore() { currentPage++; render(); }
+function toggleCard(header) { header.closest('.group-card').classList.toggle('open'); }
+
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { currentQuery = e.target.value; currentPage = 0; render(); }, 200);
+});
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('searchInput').value = '';
+  currentQuery = ''; currentCat = ''; currentBracket = ''; currentPage = 0; showFavOnly = false;
+  document.querySelectorAll('#catList .side-sub').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.side-big').forEach(b => { b.classList.remove('active'); b.textContent = '▸ ' + b.dataset.cat.replace('__big__',''); });
+  document.querySelectorAll('.sub-wrap').forEach(w => w.classList.remove('open'));
+  document.querySelector('#catList .side-btn[data-cat=""]').classList.add('active');
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
+  updateFavBtn(); render();
+});
+document.getElementById('favToggleBtn').addEventListener('click', () => { showFavOnly = !showFavOnly; currentPage = 0; updateFavBtn(); render(); });
+document.querySelector('#catList .side-btn[data-cat=""]').addEventListener('click', () => {
+  currentCat = ''; currentBracket = ''; currentPage = 0;
+  document.querySelectorAll('#catList .side-sub').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.side-big').forEach(b => { b.classList.remove('active'); b.textContent = '▸ ' + b.dataset.cat.replace('__big__',''); });
+  document.querySelectorAll('.sub-wrap').forEach(w => w.classList.remove('open'));
+  document.querySelector('#catList .side-btn[data-cat=""]').classList.add('active');
+  document.querySelectorAll('.b-btn').forEach(b => b.classList.toggle('active', b.dataset.bracket === ''));
+  render();
+});
+document.querySelector('.b-btn[data-bracket=""]').addEventListener('click', () => selectBracket(''));
+buildSidebar();
+document.querySelectorAll('.sec-btn').forEach(b => b.addEventListener('click', () => selectSection(b.dataset.sec)));
+updateFavBtn();
+render();
+
+
+// ===================== 고시 이력 탭 =====================
+let gCurrentType = '', gCurrentCat = '', gCurrentYear = '', gCurrentQuery = '', gCurrentPage = 0;
+const G_PAGE_SIZE = 50;
+
+function buildGosisiSidebar() {
+  const gcats = [...new Set(GOSISI_DATA.map(d => d.cat).filter(Boolean))].sort();
+  const gcatList = document.getElementById('gcatFilterList');
+  gcats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'side-btn g-side-btn';
+    btn.dataset.gcat = cat;
+    btn.textContent = cat;
+    btn.onclick = () => { gCurrentCat = cat; gCurrentPage = 0; document.querySelectorAll('[data-gcat]').forEach(b => b.classList.toggle('active', b.dataset.gcat === cat)); renderGosisi(); };
+    gcatList.appendChild(btn);
+  });
+  const years = [...new Set(GOSISI_DATA.map(d => d.date.slice(0, 4)))].sort((a, b) => b - a);
+  const yearList = document.getElementById('yearFilterList');
+  years.forEach(yr => {
+    const btn = document.createElement('button');
+    btn.className = 'side-btn g-side-btn';
+    btn.dataset.year = yr;
+    btn.textContent = yr + '년';
+    btn.onclick = () => { gCurrentYear = yr; gCurrentPage = 0; document.querySelectorAll('[data-year]').forEach(b => b.classList.toggle('active', b.dataset.year === yr)); renderGosisi(); };
+    yearList.appendChild(btn);
+  });
+}
+
+function getGFiltered() {
+  const q = gCurrentQuery.trim().toLowerCase();
+  return GOSISI_DATA.filter(d => {
+    if (gCurrentType && d.type !== gCurrentType) return false;
+    if (gCurrentCat && d.cat !== gCurrentCat) return false;
+    if (gCurrentYear && !d.date.startsWith(gCurrentYear)) return false;
+    if (!q) return true;
+    return d.no.toLowerCase().includes(q) || d.name.toLowerCase().includes(q) || d.code.toLowerCase().includes(q) || d.detail.toLowerCase().includes(q) || d.cat.toLowerCase().includes(q);
+  }).reverse();
+}
+
+function renderGosisi() {
+  const filtered = getGFiltered();
+  const q = gCurrentQuery.trim().toLowerCase();
+  const stats = document.getElementById('gosisiStats');
+  const main = document.getElementById('gosisiMain');
+  let statText = `고시 <strong>${filtered.length.toLocaleString()}</strong>건`;
+  if (gCurrentType) statText += ` · <strong>${gCurrentType}</strong>`;
+  if (gCurrentCat) statText += ` · <strong>${gCurrentCat}</strong>`;
+  if (gCurrentYear) statText += ` · <strong>${gCurrentYear}년</strong>`;
+  if (q) statText += ` · "<strong>${q}</strong>"`;
+  stats.innerHTML = statText;
+  if (filtered.length === 0) { main.innerHTML = `<div class="empty"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`; return; }
+
+  const end = (gCurrentPage + 1) * G_PAGE_SIZE;
+  const pageItems = filtered.slice(0, end);
+  const hasMore = filtered.length > end;
+  const yearGroups = {};
+  pageItems.forEach(d => { const yr = d.date.slice(0, 4); if (!yearGroups[yr]) yearGroups[yr] = []; yearGroups[yr].push(d); });
+
+  let html = '';
+  Object.keys(yearGroups).sort((a, b) => b - a).forEach(yr => {
+    html += `<div class="year-group-header">📅 ${yr}년 <span class="year-count">${yearGroups[yr].length}건</span></div>`;
+    yearGroups[yr].forEach(d => {
+      const typeClass = d.type || '';
+      const codeHtml = d.code ? `<span class="gosisi-code">${highlight(d.code, q)}</span>` : '';
+      html += `<div class="gosisi-card type-${typeClass}" onclick="this.classList.toggle('open')">
+        <div class="gosisi-card-header">
+          <span class="gosisi-no">${highlight(d.no, q)}</span>
+          <div class="gosisi-meta">
+            <span class="gosisi-name">${highlight(d.name, q)}</span>
+            <div class="gosisi-sub">
+              <span class="gosisi-date">시행 ${d.date}</span>
+              <span class="gosisi-cat-badge">${highlight(d.cat, q)}</span>
+              <span class="type-badge ${typeClass}">${typeClass}</span>
+              ${codeHtml}
+            </div>
+          </div>
+          <span class="gosisi-chevron">▼</span>
+        </div>
+        <div class="gosisi-detail"><strong>세부내용:</strong> ${highlight(d.detail, q)}</div>
+      </div>`;
+    });
+  });
+  if (hasMore) html += `<div style="text-align:center;padding:16px"><button onclick="loadMoreGosisi()" style="padding:9px 28px;border-radius:20px;border:1.5px solid #2980b9;background:#fff;color:#2980b9;font-size:0.88rem;cursor:pointer;font-weight:600;">더 보기 (${filtered.length - end}건 남음)</button></div>`;
+  main.innerHTML = html;
+}
+function loadMoreGosisi() { gCurrentPage++; renderGosisi(); }
+
+document.querySelectorAll('[data-type]').forEach(btn => {
+  btn.addEventListener('click', () => { gCurrentType = btn.dataset.type; gCurrentPage = 0; document.querySelectorAll('[data-type]').forEach(b => b.classList.toggle('active', b.dataset.type === btn.dataset.type)); renderGosisi(); });
+});
+document.querySelector('[data-gcat=""]').addEventListener('click', () => { gCurrentCat = ''; gCurrentPage = 0; document.querySelectorAll('[data-gcat]').forEach(b => b.classList.toggle('active', b.dataset.gcat === '')); renderGosisi(); });
+document.querySelector('[data-year=""]').addEventListener('click', () => { gCurrentYear = ''; gCurrentPage = 0; document.querySelectorAll('[data-year]').forEach(b => b.classList.toggle('active', b.dataset.year === '')); renderGosisi(); });
+let gosisiSearchTimer;
+document.getElementById('gosisiSearch').addEventListener('input', e => {
+  clearTimeout(gosisiSearchTimer);
+  gosisiSearchTimer = setTimeout(() => { gCurrentQuery = e.target.value; gCurrentPage = 0; renderGosisi(); }, 200);
+});
+
+buildGosisiSidebar();
+renderGosisi();
+</script>
+</body>
+</html>
